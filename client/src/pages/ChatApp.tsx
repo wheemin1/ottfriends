@@ -14,6 +14,7 @@ export default function ChatApp() {
   const [showMyPage, setShowMyPage] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
   const [platforms, setPlatforms] = useState<string[]>(['netflix']);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const mockMovie = {
     title: '인터스텔라',
@@ -53,19 +54,38 @@ export default function ChatApp() {
   };
 
   return (
-    <SidebarProvider>
-      <div className="flex h-screen w-full">
-        <AppSidebar
-          persona={persona}
-          onPersonaChange={setPersona}
-          onLoginClick={() => setShowMyPage(true)}
-          onNewChat={() => console.log('New chat')}
-        />
+    <>
+      <div className="flex h-screen w-full relative">
+        {sidebarOpen && (
+          <>
+            <div 
+              className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
+              onClick={() => setSidebarOpen(false)}
+              data-testid="sidebar-overlay"
+            />
+            <div className="fixed left-0 top-0 h-full w-80 bg-sidebar border-r border-sidebar-border z-50 animate-in slide-in-from-left">
+              <SidebarProvider>
+                <AppSidebar
+                  persona={persona}
+                  onPersonaChange={setPersona}
+                  onLoginClick={() => {
+                    setShowMyPage(true);
+                    setSidebarOpen(false);
+                  }}
+                  onNewChat={() => {
+                    console.log('New chat');
+                    setSidebarOpen(false);
+                  }}
+                />
+              </SidebarProvider>
+            </div>
+          </>
+        )}
 
         <div className="flex-1 flex">
           <div className="w-full md:w-2/5 border-r border-border">
             <ChatInterface
-              onMenuClick={() => {}}
+              onMenuClick={() => setSidebarOpen(true)}
               onPremiumClick={() => setShowPricing(true)}
               onRecommendationClick={handleRecommendationClick}
               persona={persona as "friendly" | "tsundere"}
@@ -113,6 +133,6 @@ export default function ChatApp() {
           </DialogContent>
         </Dialog>
       </div>
-    </SidebarProvider>
+    </>
   );
 }
