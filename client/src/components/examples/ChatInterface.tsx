@@ -6,6 +6,7 @@ export default function ChatInterfaceExample() {
       onMenuClick={() => console.log('Menu clicked')}
       onPremiumClick={() => console.log('Premium clicked')}
       onRecommendationClick={(rec) => console.log('Recommendation clicked:', rec)}
+      persona="friendly"
     />
   );
 }

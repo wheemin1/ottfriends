@@ -18,9 +18,10 @@ interface ChatInterfaceProps {
   onMenuClick: () => void;
   onPremiumClick: () => void;
   onRecommendationClick?: (rec: string) => void;
+  persona?: "friendly" | "tsundere";
 }
 
-export default function ChatInterface({ onMenuClick, onPremiumClick, onRecommendationClick }: ChatInterfaceProps) {
+export default function ChatInterface({ onMenuClick, onPremiumClick, onRecommendationClick, persona = "friendly" }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([
     { id: '1', text: '안녕! 오늘 기분이 어때?', isAI: true }
   ]);
@@ -77,9 +78,9 @@ export default function ChatInterface({ onMenuClick, onPremiumClick, onRecommend
         <div ref={scrollRef} className="space-y-4">
           {messages.map((msg) => (
             <div key={msg.id} className="space-y-3">
-              <ChatBubble message={msg.text} isAI={msg.isAI} />
+              <ChatBubble message={msg.text} isAI={msg.isAI} persona={persona} />
               {msg.recommendations && (
-                <div className="flex gap-2 flex-wrap pl-4">
+                <div className="flex gap-2 flex-wrap pl-10">
                   {msg.recommendations.map((rec, idx) => (
                     <PillButton
                       key={idx}

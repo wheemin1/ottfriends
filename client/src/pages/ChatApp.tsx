@@ -17,6 +17,10 @@ export default function ChatApp() {
 
   const mockMovie = {
     title: '인터스텔라',
+    year: '2014',
+    runtime: '169분',
+    genre: 'SF · 드라마',
+    rating: 8.7,
     posterUrl: 'https://image.tmdb.org/t/p/w500/qNBAXBIQlnOThrVvA6mA2B5ggV6.jpg',
     oneLiner: '우주 여행의 감동, 가족애의 울림',
     platforms: ['netflix'],
@@ -64,17 +68,17 @@ export default function ChatApp() {
               onMenuClick={() => {}}
               onPremiumClick={() => setShowPricing(true)}
               onRecommendationClick={handleRecommendationClick}
+              persona={persona as "friendly" | "tsundere"}
             />
           </div>
 
           <div className="hidden md:block md:w-3/5">
-            <DetailsPanel movie={selectedMovie} />
+            <DetailsPanel movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
           </div>
 
-          <Sheet>
-            <SheetTrigger className="md:hidden" />
-            <SheetContent side="bottom" className="h-[90vh]">
-              <DetailsPanel movie={selectedMovie} />
+          <Sheet open={!!selectedMovie && window.innerWidth < 768} onOpenChange={(open) => !open && setSelectedMovie(null)}>
+            <SheetContent side="bottom" className="h-[90vh] p-0">
+              <DetailsPanel movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
             </SheetContent>
           </Sheet>
         </div>

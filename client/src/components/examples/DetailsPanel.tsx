@@ -3,6 +3,10 @@ import DetailsPanel from '../DetailsPanel';
 export default function DetailsPanelExample() {
   const mockMovie = {
     title: '인터스텔라',
+    year: '2014',
+    runtime: '169분',
+    genre: 'SF · 드라마',
+    rating: 8.7,
     posterUrl: 'https://image.tmdb.org/t/p/w500/qNBAXBIQlnOThrVvA6mA2B5ggV6.jpg',
     oneLiner: '우주 여행의 감동, 가족애의 울림',
     platforms: ['netflix', 'disney'],
@@ -19,5 +23,5 @@ export default function DetailsPanelExample() {
     ]
   };
 
-  return <DetailsPanel movie={mockMovie} />;
+  return <DetailsPanel movie={mockMovie} onClose={() => console.log('Close clicked')} />;
 }
