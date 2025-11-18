@@ -4,3 +4,17 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# 환경변수 파일 (보안)
+.env
+.env.local
+.env.production
+.env.development
+.env.backup
+
+# 민감한 파일 패턴
+*.pem
+*.key
+*.cert
+.npmrc
+.yarnrc

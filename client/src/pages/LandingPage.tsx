@@ -8,7 +8,7 @@ interface LandingPageProps {
 
 export default function LandingPage({ onStartChat }: LandingPageProps) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-y-auto">
       <HeroSection onCTAClick={onStartChat} />
       <FeaturesSection />
       <PricingSection onFreeCTA={onStartChat} onPremiumCTA={onStartChat} />

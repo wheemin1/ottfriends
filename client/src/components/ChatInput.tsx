@@ -20,23 +20,23 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2 p-4">
+    <form onSubmit={handleSubmit} className="flex gap-2 p-6 bg-background border-t border-card-border">
       <Input
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         placeholder="메시지를 입력하세요..."
         disabled={disabled}
-        className="flex-1 rounded-xl bg-card border-card-border"
+        className="flex-1 rounded-xl bg-card border-card-border h-12 text-base px-4"
         data-testid="input-chat"
       />
       <Button
         type="submit"
         size="icon"
         disabled={disabled || !message.trim()}
-        className="rounded-xl"
+        className="rounded-xl h-12 w-12"
         data-testid="button-send"
       >
-        <Send className="h-4 w-4" />
+        <Send className="h-5 w-5" />
       </Button>
     </form>
   );

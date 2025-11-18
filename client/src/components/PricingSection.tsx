@@ -18,7 +18,8 @@ export default function PricingSection({ onFreeCTA, onPremiumCTA }: PricingSecti
       ],
       cta: "채팅 시작하기",
       onClick: onFreeCTA,
-      variant: "outline" as const
+      variant: "outline" as const,
+      size: "lg" as const
     },
     {
       name: "Premium",
@@ -32,7 +33,8 @@ export default function PricingSection({ onFreeCTA, onPremiumCTA }: PricingSecti
       cta: "프리미엄 시작하기",
       onClick: onPremiumCTA,
       variant: "default" as const,
-      icon: <Crown className="h-5 w-5" />
+      icon: <Crown className="h-5 w-5" />,
+      size: "lg" as const
     }
   ];
 
@@ -68,6 +70,7 @@ export default function PricingSection({ onFreeCTA, onPremiumCTA }: PricingSecti
                 <Button
                   onClick={plan.onClick}
                   variant={plan.variant}
+                  size={(plan as any).size || "default"}
                   className="w-full rounded-xl"
                   data-testid={`button-${plan.name.toLowerCase()}`}
                 >

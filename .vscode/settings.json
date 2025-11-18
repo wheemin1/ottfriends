@@ -1,0 +1,8 @@
+{
+  "terminal.integrated.cwd": "c:\\web\\WhyFirstImpression\\WhyFirstImpression",
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.git/objects/**": true,
+    "**/dist/**": true
+  }
+}

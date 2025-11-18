@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import heroMockup from '@assets/generated_images/Mobile_chat_interface_mockup_e5e260b1.png';
 
 interface HeroSectionProps {
@@ -7,9 +7,13 @@ interface HeroSectionProps {
 }
 
 export default function HeroSection({ onCTAClick }: HeroSectionProps) {
+  const scrollToFeatures = () => {
+    window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
+  };
+
   return (
-    <section className="min-h-screen flex items-center py-20 px-4" data-testid="hero-section">
-      <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+    <section className="min-h-screen flex flex-col items-center justify-center py-20 px-4 relative" data-testid="hero-section">
+      <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center flex-1">
         <div className="space-y-6">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
             야, 오늘 뭐 볼까?
@@ -36,6 +40,15 @@ export default function HeroSection({ onCTAClick }: HeroSectionProps) {
           />
         </div>
       </div>
+      
+      {/* v3.22: 스크롤 유도 */}
+      <button
+        onClick={scrollToFeatures}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce text-muted-foreground hover:text-foreground transition-colors"
+        aria-label="스크롤 다운"
+      >
+        <ChevronDown className="h-8 w-8" />
+      </button>
     </section>
   );
 }
