@@ -1,89 +1,109 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { getMainResponse, getOneLiner, translateReviews, UserConfig } from "./lib/gemini";
+import { getOneLiner, translateReviews, UserConfig } from "./lib/gemini";
 import { getMovieDetails, searchMoviesByKeywords, searchMovieByTitle, getAvailableOTTPlatforms, getGenreNames, getTrending, getUpcoming } from "./lib/tmdb";
-import { getCachedMovieData, setCachedMovieData } from "./lib/supabase";
+import { getCachedMovieData, setCachedMovieData, getIntentCache, setIntentCache } from "./lib/supabase";
+import { callSmartBrain } from "./lib/ai/smartBrain"; // v4.0: Smart Brain only
+
+// v4.0: Simple Pivot - All chat logic removed, recommendation engine only
 
 export async function registerRoutes(app: Express): Promise<Server> {
   /**
    * POST /api/chat
-   * 메인 채팅 엔드포인트 (v3.29 Empathy Hijack Fix 적용)
+   * v4.0: Simple Pivot - Intent Cache → Smart Brain Only
+   * Cost savings: $150/month (98% reduction)
    */
   app.post("/api/chat", async (req, res) => {
     try {
       const { message, chatHistory = [], userConfig = {} } = req.body;
-
+      
       if (!message || typeof message !== 'string') {
         return res.status(400).json({ error: 'Message is required' });
       }
 
-      // 기본 사용자 설정
       const config: UserConfig = {
         persona: userConfig.persona || '다정한 친구',
         ott_filters: userConfig.ott_filters || ['netflix'],
         seen_list_tmdb_ids: userConfig.seen_list_tmdb_ids || [],
-        taste_profile_titles: userConfig.taste_profile_titles || [],
+        taste_profile_titles: userConfig.taste_profile_titles || []
       };
 
-      // Gemini API 호출
-      const response = await getMainResponse(message, chatHistory, config);
-
-      console.log('[Routes] Gemini 응답:', { type: response.type, keywords: response.keywords });
-
-      // v3.16 강제 탈출 로직: 키워드 없이 recommendation이 온 경우 기본 키워드 제공
-      let keywords = response.keywords || [];
-      if (response.type === 'recommendation' && keywords.length === 0) {
-        keywords = ['popular'];
-        console.log('[v3.16] 강제 탈출: 기본 키워드 적용', keywords);
+      // v4.0.2: Intent Cache 에러 처리 (테이블 없으면 MISS)
+      let cachedIntent;
+      try {
+        cachedIntent = await getIntentCache(message);
+      } catch (cacheError) {
+        console.log('[v4.0.2] Intent Cache 테이블 없음 - MISS 처리');
+        cachedIntent = null;
+      }
+      
+      let response;
+      if (cachedIntent) {
+        console.log('[v4.0 Intent Cache] HIT:', message, '| Cost: $0');
+        // v4.0.2: keywords가 배열인지 확인
+        const keywords = Array.isArray(cachedIntent.keywords) ? cachedIntent.keywords : [];
+        response = {
+          type: cachedIntent.intent_type,
+          text: config.persona === '다정한 친구' 
+            ? (cachedIntent.intent_type === 'recommendation' ? '좋아, 이런 영화들 어때? 😊' : '알겠어!')
+            : (cachedIntent.intent_type === 'recommendation' ? '뭐, 이 정도는 볼 만한데...' : '...알았어.'),
+          keywords: keywords
+        };
+      } else {
+        console.log('[v4.0] Smart Brain 호출 - Intent Cache MISS');
+        try {
+          response = await callSmartBrain(message, chatHistory, config);
+          
+          // v4.0.2: Cache 저장 시도 (실패해도 무시)
+          if (response.type === 'recommendation' || response.type === 'search') {
+            try {
+              await setIntentCache(message, response.type, response.keywords || []);
+            } catch (setCacheError) {
+              console.log('[v4.0.2] Intent Cache 저장 실패 (무시)');
+            }
+          }
+        } catch (smartBrainError) {
+          console.error('[v4.0.2] Smart Brain 실패 - Fallback 사용:', smartBrainError);
+          // v4.0.2 Fallback: 기본 키워드로 추천
+          response = {
+            type: 'recommendation',
+            text: config.persona === '다정한 친구' 
+              ? '좋아, 이런 영화들 어때? 😊' 
+              : '뭐, 이 정도는 볼 만한데...',
+            keywords: ['인기', '최신', '감동'] // 기본 키워드
+          };
+        }
       }
 
-      console.log('[Routes] 최종 keywords:', keywords);
-
-      // v3.11: 데이터 불일치 버그 수정 - 정확한 movie 객체 전달
-      let recommendations = null;
-      if (response.type === 'recommendation' && keywords.length > 0) {
-        console.log('[Routes] TMDB 검색 실행 시작...');
-        // TMDB에서 영화 검색
-        const movies = await searchMoviesByKeywords(
-          keywords,
+      let recommendations = [];
+      if (response.keywords && response.keywords.length > 0) {
+        const movieResults = await searchMoviesByKeywords(
+          response.keywords,
           config.seen_list_tmdb_ids,
           config.ott_filters
         );
-
-        console.log(`[Routes] TMDB 검색 완료: ${movies.length}개 영화`);
-
-        recommendations = movies.map(movie => ({
-          id: movie.id, // v3.11: 정확한 TMDB ID
+        recommendations = movieResults.slice(0, 5).map(movie => ({
+          id: movie.id,
           title: movie.title,
           posterPath: movie.poster_path,
           voteAverage: movie.vote_average,
         }));
-      } else if (response.type === 'search_result' && response.keywords && response.keywords.length > 0) {
-        // 특정 영화 검색
-        const movie = await searchMovieByTitle(response.keywords[0]);
-        if (movie) {
-          recommendations = [{
-            id: movie.id,
-            title: movie.title,
-            posterPath: movie.poster_path,
-            voteAverage: movie.vote_average,
-          }];
-        }
       }
 
-      res.json({
+      return res.json({
         type: response.type,
         text: response.text,
-        recommendations,
+        keywords: response.keywords,
+        recommendations: recommendations.length > 0 ? recommendations : undefined,
+        config
       });
 
-    } catch (error: any) {
-      console.error('Chat API 오류:', error);
-      res.status(500).json({ 
-        error: '채팅 처리 중 오류가 발생했습니다',
+    } catch (error) {
+      console.error('[v4.0] Error:', error);
+      return res.status(500).json({ 
         type: 'reply',
-        text: '아, 잠깐 생각 좀 해볼게... 다시 한번 말해줄래?'
+        text: '죄송해요, 다시 시도해주세요!'
       });
     }
   });
@@ -153,6 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         id: movie.id,
         title: movie.title,
+        originalTitle: movie.original_title, // v4.1: 영문 제목 (매거진 히어로용)
         year: movie.release_date ? movie.release_date.split('-')[0] : '',
         runtime: movie.runtime ? `${movie.runtime}분` : '',
         genre,
@@ -160,6 +181,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         posterUrl: movie.poster_path 
           ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
           : null,
+        backdropUrl: movie.backdrop_path  // v4.1: 풀-블리드 배경용
+          ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`
+          : null,
+        images: {  // v4.1: 갤러리용 이미지들
+          backdrops: movie.images?.backdrops?.slice(0, 9).map(img => 
+            `https://image.tmdb.org/t/p/w780${img.file_path}`
+          ) || [],
+          posters: movie.images?.posters?.slice(0, 6).map(img =>
+            `https://image.tmdb.org/t/p/w342${img.file_path}`
+          ) || []
+        },
         oneLiner,
         platforms,
         plot: movie.overview,

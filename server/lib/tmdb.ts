@@ -1,7 +1,7 @@
 /**
  * TMDB API 통합 라이브러리
  * v3.7/v3.9: 스마트 셔플 및 캐싱 로직
- * v3.35: 동적 캐싱 (Trending, Upcoming)
+ * v4.0.1: Supabase dynamic_cache 복구 (메모리 캐시 = Vercel에서 재앙)
  */
 
 import { getDynamicCache, setDynamicCache } from './supabase';
@@ -38,6 +38,20 @@ export interface TMDBMovie {
       created_at: string;
     }>;
   };
+  // v4.1: 매거진 UI용 이미지 갤러리
+  images?: {
+    backdrops: Array<{
+      file_path: string;
+      width: number;
+      height: number;
+      vote_average: number;
+    }>;
+    posters: Array<{
+      file_path: string;
+      width: number;
+      height: number;
+    }>;
+  };
 }
 
 /**
@@ -50,7 +64,8 @@ export async function getMovieDetails(movieId: number): Promise<TMDBMovie | null
   }
 
   try {
-    const url = `${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&language=ko-KR&append_to_response=credits,reviews,watch/providers`;
+    // v4.1: images 추가 (매거진 UI용 백드롭/포스터 갤러리)
+    const url = `${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&language=ko-KR&append_to_response=credits,reviews,watch/providers,images`;
     const response = await fetch(url);
     
     if (!response.ok) {
@@ -266,7 +281,7 @@ export function getGenreNames(genreIds: number[]): string {
 }
 
 /**
- * v3.35: 트렌딩 영화 가져오기 (6시간 캐싱)
+ * v4.0.1: 트렌딩 영화 가져오기 (Supabase 캐싱, Vercel 안전)
  * Cache HIT: Supabase에서 바로 반환 (TMDB 호출 0)
  * Cache MISS: TMDB 호출 → Supabase 캐싱 → 반환
  */
@@ -274,10 +289,10 @@ export async function getTrending(): Promise<TMDBMovie[]> {
   const cacheKey = 'tmdb:trending';
 
   try {
-    // 1. 캐시 조회 (Cache HIT)
+    // 1. Supabase 캐시 조회 (Cache HIT)
     const cached = await getDynamicCache(cacheKey);
     if (cached) {
-      console.log('[TMDB] Cache HIT: trending');
+      console.log('[TMDB] Supabase Cache HIT: trending');
       return cached as TMDBMovie[];
     }
 
@@ -310,16 +325,16 @@ export async function getTrending(): Promise<TMDBMovie[]> {
 }
 
 /**
- * v3.35: 개봉 예정 영화 가져오기 (6시간 캐싱)
+ * v4.0.1: 개봉 예정 영화 가져오기 (Supabase 캐싱, Vercel 안전)
  */
 export async function getUpcoming(): Promise<TMDBMovie[]> {
   const cacheKey = 'tmdb:upcoming';
 
   try {
-    // 1. 캐시 조회 (Cache HIT)
+    // 1. Supabase 캐시 조회 (Cache HIT)
     const cached = await getDynamicCache(cacheKey);
     if (cached) {
-      console.log('[TMDB] Cache HIT: upcoming');
+      console.log('[TMDB] Supabase Cache HIT: upcoming');
       return cached as TMDBMovie[];
     }
 

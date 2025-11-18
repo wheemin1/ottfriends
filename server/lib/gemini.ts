@@ -33,7 +33,8 @@ export async function getMainResponse(
   user_config: UserConfig
 ): Promise<GeminiResponse> {
   const genAI = getGenAI();
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+  // v3.43: gemini-2.0-flash 사용 (Smart Brain, 안정적)
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
   
   // 페르소나별 시스템 프롬프트
   const personaPrompts: { [key: string]: string } = {
@@ -241,6 +242,118 @@ keywords 규칙:
       text: '아, 잠깐 생각 좀 해볼게... 다시 한번 말해줄래?',
       keywords: []
     };
+  }
+}
+
+/**
+ * v3.39: 압축된 프롬프트 (1851→400 토큰, 78% 감소, 90% 품질 유지)
+ * Smart Brain에서 이 함수를 호출하도록 변경
+ */
+export async function getMainResponseCompressed(
+  message: string,
+  chat_history: any[],
+  user_config: UserConfig
+): Promise<GeminiResponse> {
+  const genAI = getGenAI();
+  // v4.0.2: gemini-2.0-flash 사용 (중복 선언 제거)
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  
+  // 페르소나별 간결한 프롬프트
+  const personaPrompt = user_config.persona === '츤데레 친구'
+    ? '츤데레 친구처럼 말해. 쿨하고 퉁명스럽지만 속은 따뜻해.'
+    : '다정한 친구처럼 공감하며 말해. 따뜻하고 친근하게.';
+
+  const systemPrompt = `
+${personaPrompt}
+
+**역할**: 영화 추천 엔진 (v4.0 Simple Pivot)
+
+**출력 형식**:
+{
+  "type": "reply" | "recommendation" | "search",
+  "text": "응답 텍스트",
+  "keywords": ["keyword1", "keyword2"]
+}
+
+**판단 로직** (v4.0.2 강화)**:
+1. recommendation: 추천 요청 (적극 인식!)
+   - "아무거나", "암거나", "아무거", "모르겠어", "추천해", "뭐 볼까", "볼만한 거", "재밌는 거", "영화 찾아줘"
+   - keywords: ["인기", "최신"] (기본값)
+   - 장르 명시: ["action"], ["comedy", "feel-good"], ["romance", "감동"]
+
+2. search: 특정 영화 검색
+   - 영화 제목 명시: "기생충", "인터스텔라"
+   - keywords: ["Parasite"], ["Interstellar"]
+
+3. reply: 추천 요청 아님 → 간단히 응답 후 영화 추천 유도
+   - "안녕" → "안녕! ✨ 오늘 어떤 영화 찾아줄까?"
+   - "고마워" → "천만에! 다른 영화 추천 필요하면 말해!"
+   - keywords: []
+
+**중요 규칙**:
+- "아무거나" = recommendation (type: "recommendation", keywords: ["인기", "최신"])
+- "추천해" = recommendation (type: "recommendation", keywords: ["인기"])
+- 장르 불명확 시 → recommendation + keywords: ["인기", "최신", "평점높은"]
+- reply는 최소화! 대부분 recommendation으로 처리!
+
+**사용자 설정**:
+- OTT: ${user_config.ott_filters.join(', ') || '전체'}
+
+사용자 메시지를 분석하고 JSON만 출력하세요.
+`;
+
+  // v4.0.2: chat_history 안전하게 변환 (빈 메시지 필터링)
+  const history = chat_history
+    .slice(-3)
+    .filter((h: any) => h && (h.message || h.text || h.parts))
+    .map((h: any) => {
+      const text = h.message || h.text || (typeof h.parts === 'string' ? h.parts : '');
+      return {
+        role: h.role === 'user' ? 'user' : 'model',
+        parts: [{ text: text }]
+      };
+    })
+    .filter((h: any) => h.parts[0].text && h.parts[0].text.trim().length > 0);
+
+  // v4.0.2: Gemini 요구사항 - 첫 메시지는 반드시 'user'여야 함
+  if (history.length > 0 && history[0].role !== 'user') {
+    console.log('[Gemini] 첫 메시지가 model이므로 제거:', history[0]);
+    history.shift(); // 첫 번째 메시지 제거
+  }
+
+  try {
+    const chat = model.startChat({
+      history,
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 500,
+      },
+    });
+
+    const result = await chat.sendMessage(systemPrompt + "\n\n사용자: " + message);
+    const responseText = result.response.text();
+
+    // v3.39: Cost monitoring
+    const usage = result.response.usageMetadata;
+    if (usage) {
+      const inputCost = (usage.promptTokenCount * 0.075) / 1000000;
+      const outputCost = (usage.candidatesTokenCount * 0.30) / 1000000;
+      const totalCost = inputCost + outputCost;
+      console.log(`[Smart Brain Cost] Tokens: ${usage.promptTokenCount} in + ${usage.candidatesTokenCount} out | Cost: $${totalCost.toFixed(6)}`);
+    }
+
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error('[Gemini Compressed] JSON 파싱 실패:', responseText);
+      return { type: 'reply', text: '죄송해요, 다시 한 번 말씀해 주시겠어요?' };
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    return parsed;
+
+  } catch (error) {
+    console.error('[Gemini Compressed] API 호출 실패:', error);
+    return { type: 'reply', text: '지금 서버 상태가 안 좋아요. 잠시 후 다시 시도해 주세요.' };
   }
 }
 

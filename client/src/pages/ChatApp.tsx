@@ -4,6 +4,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import AppSidebar from "@/components/AppSidebar";
 import ChatInterface from "@/components/ChatInterface";
 import DetailsPanel from "@/components/DetailsPanel";
+import MovieOverlay from "@/components/MovieOverlay";
 import MyPage from "@/components/MyPage";
 import PersonaSelector from "@/components/PersonaSelector";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -110,43 +111,35 @@ export default function ChatApp() {
           </>
         )}
 
-        <div className="flex-1 flex h-screen overflow-hidden">
-          <div className="w-full md:w-2/5 border-r-2 border-border shadow-sm h-full overflow-hidden">
-            <ChatInterface
-              onMenuClick={() => setSidebarOpen(true)}
-              onPremiumClick={() => setShowPricing(true)}
-              onMyPageClick={() => setShowMyPage(true)}
-              onPersonaClick={() => setShowPersonaSelector(true)}
-              onLoginClick={() => setShowMyPage(true)}
-              onRecommendationClick={handleRecommendationClick}
-              persona={persona as "friendly" | "tsundere"}
-              quotaInfo={{
-                recommendations: { used: 2, total: 3 },
-                chats: { used: 45, total: 50 }
-              }}
-            />
-          </div>
-
-          <div className="hidden md:block md:w-3/5 h-full overflow-hidden">
-            <DetailsPanel 
-              movie={selectedMovie} 
-              onClose={() => setSelectedMovie(null)}
-              onMovieClick={handleRecommendationClick}
-              isLoading={isLoadingMovie}
-            />
-          </div>
-
-          <Sheet open={!!selectedMovie && window.innerWidth < 768} onOpenChange={(open) => !open && setSelectedMovie(null)}>
-            <SheetContent side="bottom" className="h-[90vh] p-0">
-              <DetailsPanel 
-                movie={selectedMovie} 
-                onClose={() => setSelectedMovie(null)}
-                onMovieClick={handleRecommendationClick}
-                isLoading={isLoadingMovie}
-              />
-            </SheetContent>
-          </Sheet>
+        {/* v4.3: 채팅창 (영화 선택 시 50%, 기본 100%) */}
+        <div className={`h-screen overflow-hidden transition-all duration-500 ${selectedMovie ? 'w-1/2' : 'w-full'}`}>
+          <ChatInterface
+            onMenuClick={() => setSidebarOpen(true)}
+            onPremiumClick={() => setShowPricing(true)}
+            onMyPageClick={() => setShowMyPage(true)}
+            onPersonaClick={() => setShowPersonaSelector(true)}
+            onLoginClick={() => setShowMyPage(true)}
+            onRecommendationClick={handleRecommendationClick}
+            persona={persona as "friendly" | "tsundere"}
+            quotaInfo={{
+              recommendations: { used: 2, total: 3 },
+              chats: { used: 45, total: 50 }
+            }}
+          />
         </div>
+
+        {/* v4.3: 영화 상세 패널 (오른쪽 50%) */}
+        <MovieOverlay
+          open={!!selectedMovie}
+          onClose={() => {
+            setSelectedMovie(null);
+            setIsLoadingMovie(false);
+          }}
+          movie={selectedMovie}
+        />
+
+        {/* Mobile용 기존 Sheet 제거 (MovieOverlay가 모든 화면 크기 처리) */}
+        {/* <Sheet>...</Sheet> 코드 삭제됨 */}
 
         <Dialog open={showPricing} onOpenChange={setShowPricing}>
           <DialogContent className="max-w-4xl rounded-xl">

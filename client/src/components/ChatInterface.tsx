@@ -35,11 +35,25 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageClick, onPersonaClick, onLoginClick, onRecommendationClick, persona = "friendly", quotaInfo }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    { id: '1', text: '안녕! 오늘 기분이 어때?', isAI: true }
-  ]);
+  // v4.1.2: localStorage에서 채팅 기록 복원
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const saved = localStorage.getItem('ottfriend_chat_history');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse chat history:', e);
+      }
+    }
+    return [{ id: '1', text: '안녕! 오늘 기분이 어때?', isAI: true }];
+  });
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // v4.1.2: 메시지 변경 시 localStorage에 저장
+  useEffect(() => {
+    localStorage.setItem('ottfriend_chat_history', JSON.stringify(messages));
+  }, [messages]);
 
   useEffect(() => {
     if (scrollRef.current) {

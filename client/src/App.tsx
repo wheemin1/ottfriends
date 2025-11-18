@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -10,7 +10,17 @@ import LandingPage from "@/pages/LandingPage";
 import ChatApp from "@/pages/ChatApp";
 
 function Router() {
-  const [showChat, setShowChat] = useState(false);
+  // v4.1.2: localStorage에서 채팅 시작 여부 복원
+  const [showChat, setShowChat] = useState(() => {
+    const saved = localStorage.getItem('ottfriend_chat_started');
+    return saved === 'true';
+  });
+
+  // v4.1.2: 채팅 시작 시 localStorage에 저장
+  const handleStartChat = () => {
+    localStorage.setItem('ottfriend_chat_started', 'true');
+    setShowChat(true);
+  };
 
   if (showChat) {
     return <ChatApp />;
@@ -19,7 +29,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/">
-        <LandingPage onStartChat={() => setShowChat(true)} />
+        <LandingPage onStartChat={handleStartChat} />
       </Route>
       <Route path="/chat">
         <ChatApp />

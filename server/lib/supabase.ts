@@ -153,7 +153,7 @@ export async function getUserPremiumStatus(userId: string): Promise<boolean> {
 }
 
 /**
- * v3.35 동적 캐싱 - TMDB API 응답 캐싱 (6시간 TTL)
+ * v4.0.1: TMDB 동적 캐싱 복구 (Vercel Serverless 안전)
  * dynamic_cache 테이블 구조:
  * - cache_key (PK, text) - 예: 'tmdb:trending', 'tmdb:upcoming'
  * - cache_value (jsonb) - TMDB API 응답 데이터
@@ -203,5 +203,75 @@ export async function setDynamicCache(
     console.error(`[Cache] Write error for key ${cacheKey}:`, error);
   } else {
     console.log(`[Cache] SET for key: ${cacheKey}, TTL: ${ttlHours}h`);
+  }
+}
+
+/**
+ * v3.41: Intent Cache - 메시지 → 의도 캐싱
+ */
+
+import crypto from 'crypto';
+
+// 메시지 정규화 후 캐시 키 생성 (MD5 해시)
+function normalizeMessageToCacheKey(message: string): string {
+  const normalized = message
+    .toLowerCase()
+    .replace(/[^a-z0-9가-힣\s]/g, '')
+    .replace(/[이가을를에서와과]/g, '') // 조사 제거
+    .replace(/(.)\1+/g, '$1') // 중복 문자 제거
+    .trim();
+  
+  return crypto.createHash('md5').update(normalized, 'utf8').digest('hex');
+}
+
+export async function getIntentCache(message: string) {
+  const cacheKey = normalizeMessageToCacheKey(message);
+  
+  const { data, error } = await supabase
+    .from('intent_cache')
+    .select('*')
+    .eq('cache_key', cacheKey)
+    .gt('expires_at', new Date().toISOString())
+    .single();
+
+  if (error) {
+    console.log('[Intent Cache] MISS:', cacheKey);
+    return null;
+  }
+
+  // 비동기로 hit_count 증가 (응답 속도에 영향 없음)
+  supabase
+    .from('intent_cache')
+    .update({ hit_count: (data.hit_count || 0) + 1 })
+    .eq('cache_key', cacheKey)
+    .then(() => console.log('[Intent Cache] Hit count updated'));
+
+  console.log('[Intent Cache] HIT:', cacheKey, '→', data.keywords);
+  return data;
+}
+
+export async function setIntentCache(
+  message: string,
+  intentType: string,
+  keywords: string[]
+) {
+  const cacheKey = normalizeMessageToCacheKey(message);
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30일
+
+  const { error } = await supabase
+    .from('intent_cache')
+    .upsert({
+      cache_key: cacheKey,
+      intent_type: intentType,
+      keywords: keywords,
+      normalized_message: message.toLowerCase().trim(),
+      hit_count: 0,
+      expires_at: expiresAt.toISOString()
+    }, { onConflict: 'cache_key' });
+
+  if (error) {
+    console.error('[Intent Cache] Write error:', error);
+  } else {
+    console.log('[Intent Cache] SET:', cacheKey, '→', keywords);
   }
 }
