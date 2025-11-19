@@ -32,25 +32,28 @@ interface ChatInterfaceProps {
     recommendations: { used: number; total: number };
     chats: { used: number; total: number };
   };
+  isGuest?: boolean; // v4.8: 게스트 모드
 }
 
-export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageClick, onPersonaClick, onLoginClick, onRecommendationClick, persona = "friendly", quotaInfo }: ChatInterfaceProps) {
-  // v4.3: localStorage에서 채팅 기록 복원 + 세션 자동 생성
+export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageClick, onPersonaClick, onLoginClick, onRecommendationClick, persona = "friendly", quotaInfo, isGuest = false }: ChatInterfaceProps) {
+  // v4.8: 게스트는 localStorage 사용 안 함
   const [messages, setMessages] = useState<Message[]>(() => {
-    const saved = localStorage.getItem('ottfriend_chat_history');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to parse chat history:', e);
+    if (!isGuest) {
+      const saved = localStorage.getItem('ottfriend_chat_history');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error('Failed to parse chat history:', e);
+        }
       }
-    }
-    
-    // 첫 방문 시 자동 세션 생성
-    const currentSession = localStorage.getItem('ottfriend_current_session');
-    if (!currentSession) {
-      const newSessionId = `session_${Date.now()}`;
-      localStorage.setItem('ottfriend_current_session', newSessionId);
+      
+      // 첫 방문 시 자동 세션 생성
+      const currentSession = localStorage.getItem('ottfriend_current_session');
+      if (!currentSession) {
+        const newSessionId = `session_${Date.now()}`;
+        localStorage.setItem('ottfriend_current_session', newSessionId);
+      }
     }
     
     return [{ id: '1', text: '안녕! 오늘 기분이 어때?', isAI: true }];
@@ -58,8 +61,10 @@ export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageCli
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // v4.3: 메시지 변경 시 localStorage + 세션에 저장
+  // v4.8: 게스트 모드에서는 저장 안 함
   useEffect(() => {
+    if (isGuest) return; // 게스트는 저장 스킵
+    
     localStorage.setItem('ottfriend_chat_history', JSON.stringify(messages));
     
     // Save to session list
@@ -90,7 +95,7 @@ export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageCli
       localStorage.setItem('ottfriend_chat_sessions', JSON.stringify(sessions));
       window.dispatchEvent(new Event('chatSessionsUpdated'));
     }
-  }, [messages]);
+  }, [messages, isGuest]);
 
   // v4.3: 세션 이벤트 리스너
   useEffect(() => {

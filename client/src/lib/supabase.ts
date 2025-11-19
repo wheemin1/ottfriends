@@ -16,14 +16,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
  * 현재 로그인한 사용자 정보 가져오기
  */
 export async function getCurrentUser() {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  
-  if (error) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.user || null;
+  } catch (error) {
     console.error('Get user error:', error);
     return null;
   }
-  
-  return user;
 }
 
 /**

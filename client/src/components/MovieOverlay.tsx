@@ -1,10 +1,11 @@
 /**
- * v4.3: Magazine-Style Movie Details Panel
- * 오른쪽 패널에서 서서히 slide-in, 풀-블리드 백드롭 배경
- * Parasite 매거진 UI 스타일 구현
+ * v4.4: Magazine-Style Movie Details Panel with Framer Motion
+ * 고급스러운 오버레이 슬라이드 애니메이션 (Parallax Overlay)
+ * 기존 영화는 살짝 밀리고, 새 영화가 그 위를 덮으며 들어온다
  */
 
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,8 +53,6 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [reviewText, setReviewText] = useState('');
   const [reviews, setReviews] = useState<Array<{rating: number, text: string, author: string, date: string}>>([]);
-  const [currentMovieId, setCurrentMovieId] = useState<number | undefined>(undefined);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
   const { toast } = useToast();
@@ -77,23 +76,6 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
       data?.subscription?.unsubscribe();
     };
   }, []);
-
-  // v4.3.1: 영화 전환 감지 및 애니메이션 (useEffect로 무한 루프 방지)
-  useEffect(() => {
-    if (movie?.id !== currentMovieId && movie?.id !== undefined) {
-      if (currentMovieId !== undefined) {
-        // 기존 영화에서 새 영화로 전환
-        setIsTransitioning(true);
-        setTimeout(() => {
-          setCurrentMovieId(movie.id);
-          setIsTransitioning(false);
-        }, 300); // fade out 시간
-      } else {
-        // 첫 로드
-        setCurrentMovieId(movie.id);
-      }
-    }
-  }, [movie?.id, currentMovieId]);
 
   if (!movie) return null;
 
@@ -197,14 +179,40 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
 
   return (
     <div 
-      className={`fixed right-0 top-0 bottom-0 w-1/2 bg-background border-l border-border shadow-2xl z-50
-        transition-transform duration-500 ease-out
-        ${open ? 'translate-x-0' : 'translate-x-full'}`}
+      className="fixed right-0 top-0 bottom-0 w-1/2 bg-background border-l border-border shadow-2xl z-50 overflow-hidden"
     >
       <ScrollArea className="h-full">
-        <div 
-          className={`relative min-h-full transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
-        >{/* v4.3.1: 영화 전환 시 스르륵 fade 효과 */}
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.div
+            key={movie?.id || 'empty'}
+            initial={{ 
+              x: "100%", 
+              opacity: 0,
+            }}
+            animate={{ 
+              x: 0, 
+              opacity: 1,
+              scale: 1,
+              filter: "brightness(1)",
+            }}
+            exit={{ 
+              x: "-20%", 
+              opacity: 0.7,
+              scale: 0.95,
+              filter: "brightness(0.5)",
+            }}
+            transition={{ 
+              type: "spring", 
+              stiffness: 350, 
+              damping: 30,
+              exit: { duration: 0.4 }
+            }}
+            className="relative min-h-full"
+            style={{ 
+              zIndex: 50,
+              boxShadow: '-20px 0 50px rgba(0,0,0,0.5)'
+            }}
+          >{/* v4.4: iOS 스타일 Parallax Stacking - 깊이감 있는 프리미엄 전환 */}
               {/* v4.1: Full-Bleed Hero Section with Backdrop */}
               <div className="relative w-full h-[60vh] overflow-hidden">
                 {/* Backdrop Image */}
@@ -331,6 +339,16 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                           <span className="text-2xl font-bold text-foreground">{movie.friendsRating?.toFixed(1) || '0.0'}</span>
                           <span className="text-muted-foreground text-base">/10</span>
                           <span className="text-sm text-muted-foreground ml-1">({movie.friendsRatingCount}명)</span>
+                        </div>
+                      </>
+                    )}
+                    {isLoggedIn && (!movie.friendsRatingCount || movie.friendsRatingCount === 0) && (
+                      <>
+                        <div className="h-8 w-px bg-border" />
+                        <div className="flex items-center gap-2">
+                          <Users className="h-6 w-6 text-muted-foreground/50" />
+                          <span className="text-base text-muted-foreground">프렌즈 후기 없음</span>
+                          <span className="text-sm text-primary ml-1">👇 첫 후기를 남겨보세요!</span>
                         </div>
                       </>
                     )}
@@ -585,7 +603,8 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                   </AccordionItem>
                 </Accordion>
               </div>
-            </div>
+            </motion.div>
+          </AnimatePresence>
         </ScrollArea>
       </div>
   );

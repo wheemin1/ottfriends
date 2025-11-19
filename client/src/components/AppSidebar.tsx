@@ -107,28 +107,28 @@ export default function AppSidebar({ onNewChat, onLoadSession, currentSessionId 
           <SidebarMenu>
             {sessionList.map(session => (
               <SidebarMenuItem key={session.id}>
-                <SidebarMenuButton
-                  onClick={() => onLoadSession?.(session.id)}
-                  className={`w-full justify-between group hover:bg-accent ${
-                    currentSessionId === session.id ? 'bg-accent' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <MessageSquare className="h-4 w-4 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{session.title}</p>
-                      <p className="text-xs text-muted-foreground">{formatTime(session.timestamp)}</p>
+                <div className="relative group w-full">
+                  <SidebarMenuButton
+                    onClick={() => onLoadSession?.(session.id)}
+                    className={`w-full justify-start ${
+                      currentSessionId === session.id ? 'bg-accent' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{session.title}</p>
+                        <p className="text-xs text-muted-foreground">{formatTime(session.timestamp)}</p>
+                      </div>
                     </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                  </SidebarMenuButton>
+                  <button
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-md hover:bg-accent opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={(e) => handleDeleteSession(session.id, e)}
                   >
                     <Trash2 className="h-3 w-3" />
-                  </Button>
-                </SidebarMenuButton>
+                  </button>
+                </div>
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
