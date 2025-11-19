@@ -35,7 +35,7 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageClick, onPersonaClick, onLoginClick, onRecommendationClick, persona = "friendly", quotaInfo }: ChatInterfaceProps) {
-  // v4.1.2: localStorage에서 채팅 기록 복원
+  // v4.3: localStorage에서 채팅 기록 복원 + 세션 자동 생성
   const [messages, setMessages] = useState<Message[]>(() => {
     const saved = localStorage.getItem('ottfriend_chat_history');
     if (saved) {
@@ -45,15 +45,78 @@ export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageCli
         console.error('Failed to parse chat history:', e);
       }
     }
+    
+    // 첫 방문 시 자동 세션 생성
+    const currentSession = localStorage.getItem('ottfriend_current_session');
+    if (!currentSession) {
+      const newSessionId = `session_${Date.now()}`;
+      localStorage.setItem('ottfriend_current_session', newSessionId);
+    }
+    
     return [{ id: '1', text: '안녕! 오늘 기분이 어때?', isAI: true }];
   });
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // v4.1.2: 메시지 변경 시 localStorage에 저장
+  // v4.3: 메시지 변경 시 localStorage + 세션에 저장
   useEffect(() => {
     localStorage.setItem('ottfriend_chat_history', JSON.stringify(messages));
+    
+    // Save to session list
+    const currentSessionId = localStorage.getItem('ottfriend_current_session');
+    if (currentSessionId && messages.length > 1) {
+      const sessions = JSON.parse(localStorage.getItem('ottfriend_chat_sessions') || '[]');
+      const sessionIndex = sessions.findIndex((s: any) => s.id === currentSessionId);
+      
+      // Get title from first user message
+      const firstUserMessage = messages.find(m => !m.isAI);
+      const title = firstUserMessage ? firstUserMessage.text.slice(0, 30) + (firstUserMessage.text.length > 30 ? '...' : '') : '새 대화';
+      const preview = messages[messages.length - 1]?.text.slice(0, 50) || '';
+      
+      const sessionData = {
+        id: currentSessionId,
+        title,
+        preview,
+        timestamp: Date.now(),
+        messages
+      };
+      
+      if (sessionIndex >= 0) {
+        sessions[sessionIndex] = sessionData;
+      } else {
+        sessions.push(sessionData);
+      }
+      
+      localStorage.setItem('ottfriend_chat_sessions', JSON.stringify(sessions));
+      window.dispatchEvent(new Event('chatSessionsUpdated'));
+    }
   }, [messages]);
+
+  // v4.3: 세션 이벤트 리스너
+  useEffect(() => {
+    const handleNewSession = () => {
+      setMessages([{ id: '1', text: '안녕! 오늘 기분이 어때?', isAI: true }]);
+    };
+    
+    const handleLoadSession = () => {
+      const saved = localStorage.getItem('ottfriend_chat_history');
+      if (saved) {
+        try {
+          setMessages(JSON.parse(saved));
+        } catch (e) {
+          console.error('Failed to load session:', e);
+        }
+      }
+    };
+    
+    window.addEventListener('newChatSession', handleNewSession);
+    window.addEventListener('loadChatSession', handleLoadSession);
+    
+    return () => {
+      window.removeEventListener('newChatSession', handleNewSession);
+      window.removeEventListener('loadChatSession', handleLoadSession);
+    };
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {

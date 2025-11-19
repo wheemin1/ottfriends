@@ -36,6 +36,18 @@ export interface TMDBMovie {
       author: string;
       content: string;
       created_at: string;
+      author_details?: {
+        rating?: number;
+      };
+    }>;
+  };
+  // v4.3.2: 예고편 지원
+  videos?: {
+    results: Array<{
+      key: string;
+      site: string;
+      type: string;
+      name: string;
     }>;
   };
   // v4.1: 매거진 UI용 이미지 갤러리
@@ -64,8 +76,8 @@ export async function getMovieDetails(movieId: number): Promise<TMDBMovie | null
   }
 
   try {
-    // v4.1: images 추가 (매거진 UI용 백드롭/포스터 갤러리)
-    const url = `${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&language=ko-KR&append_to_response=credits,reviews,watch/providers,images`;
+    // v4.3.2: videos 추가 (예고편 지원)
+    const url = `${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&language=ko-KR&append_to_response=credits,reviews,watch/providers,images,videos`;
     const response = await fetch(url);
     
     if (!response.ok) {

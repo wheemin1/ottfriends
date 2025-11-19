@@ -19,6 +19,9 @@ export default function ChatApp() {
   const [platforms, setPlatforms] = useState<string[]>(['netflix']);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoadingMovie, setIsLoadingMovie] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string>(() => {
+    return localStorage.getItem('ottfriend_current_session') || '';
+  });
 
   const mockMovie = {
     title: '인터스텔라',
@@ -102,9 +105,30 @@ export default function ChatApp() {
               <SidebarProvider>
                 <AppSidebar
                   onNewChat={() => {
-                    console.log('New chat');
+                    // Create new session
+                    const newSessionId = `session_${Date.now()}`;
+                    setCurrentSessionId(newSessionId);
+                    localStorage.setItem('ottfriend_current_session', newSessionId);
+                    localStorage.removeItem('ottfriend_chat_history');
+                    
+                    // Trigger ChatInterface to reset
+                    window.dispatchEvent(new Event('newChatSession'));
                     setSidebarOpen(false);
                   }}
+                  onLoadSession={(sessionId) => {
+                    setCurrentSessionId(sessionId);
+                    localStorage.setItem('ottfriend_current_session', sessionId);
+                    
+                    // Load session history
+                    const sessions = JSON.parse(localStorage.getItem('ottfriend_chat_sessions') || '[]');
+                    const session = sessions.find((s: any) => s.id === sessionId);
+                    if (session && session.messages) {
+                      localStorage.setItem('ottfriend_chat_history', JSON.stringify(session.messages));
+                      window.dispatchEvent(new Event('loadChatSession'));
+                    }
+                    setSidebarOpen(false);
+                  }}
+                  currentSessionId={currentSessionId}
                 />
               </SidebarProvider>
             </div>

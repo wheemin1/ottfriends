@@ -64,11 +64,32 @@ export async function setCachedMovieData(
 }
 
 /**
+ * v4.3.2: 프렌즈 평점 계산 (사용자들이 남긴 평점 평균)
+ */
+export async function getFriendsRating(movieId: number): Promise<{ average: number | null, count: number }> {
+  const { data, error } = await supabase
+    .from('comments')
+    .select('rating')
+    .eq('movie_id', movieId)
+    .not('rating', 'is', null);
+
+  if (error || !data || data.length === 0) {
+    return { average: null, count: 0 };
+  }
+
+  const ratings = data.map(d => d.rating).filter(r => r !== null);
+  const average = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
+  
+  return { average: Math.round(average * 10) / 10, count: ratings.length };
+}
+
+/**
  * v3.4 자체 후기 - 댓글 관리
  * comments 테이블 구조:
  * - id (PK, uuid)
  * - movie_id (FK, integer)
  * - user_id (FK, uuid)
+ * - rating (integer, 1-10)
  * - comment_text (text)
  * - created_at (timestamp)
  */
@@ -97,6 +118,7 @@ export async function getMovieComments(movieId: number) {
 export async function addMovieComment(
   movieId: number,
   userId: string,
+  rating: number | null,
   commentText: string
 ) {
   const { data, error } = await supabase
@@ -104,6 +126,7 @@ export async function addMovieComment(
     .insert({
       movie_id: movieId,
       user_id: userId,
+      rating: rating,
       comment_text: commentText,
     })
     .select()

@@ -4,13 +4,14 @@
  * Parasite 매거진 UI 스타일 구현
  */
 
+import { useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Textarea } from "@/components/ui/textarea";
-import { X, Heart, Popcorn, BookOpen, Globe, Users, MessageSquare, Star } from "lucide-react";
-import { useState } from "react";
+import { X, Heart, Popcorn, BookOpen, Globe, Users, MessageSquare, Star, Play } from "lucide-react";
+import { getCurrentUser, signInWithGoogle, onAuthStateChange } from "@/lib/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import OTTPlatforms from "./OTTPlatforms";
@@ -38,6 +39,7 @@ interface MovieOverlayProps {
     platforms: Array<{name: string, logoPath: string}>;
     plot: string;
     reviews: string[];
+    trailerUrl?: string;
     cast: { name: string; character: string; photo: string }[];
     friendsRating?: number;
     friendsRatingCount?: number;
@@ -50,7 +52,48 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [reviewText, setReviewText] = useState('');
   const [reviews, setReviews] = useState<Array<{rating: number, text: string, author: string, date: string}>>([]);
+  const [currentMovieId, setCurrentMovieId] = useState<number | undefined>(undefined);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const { toast } = useToast();
+
+  // v4.3.2: Supabase 인증 상태 확인
+  useEffect(() => {
+    // 현재 사용자 확인
+    getCurrentUser().then((currentUser) => {
+      setIsLoggedIn(!!currentUser);
+      setUser(currentUser);
+    });
+
+    // 인증 상태 변경 리스너
+    const { data } = onAuthStateChange((currentUser) => {
+      setIsLoggedIn(!!currentUser);
+      setUser(currentUser);
+    });
+
+    // 클린업
+    return () => {
+      data?.subscription?.unsubscribe();
+    };
+  }, []);
+
+  // v4.3.1: 영화 전환 감지 및 애니메이션 (useEffect로 무한 루프 방지)
+  useEffect(() => {
+    if (movie?.id !== currentMovieId && movie?.id !== undefined) {
+      if (currentMovieId !== undefined) {
+        // 기존 영화에서 새 영화로 전환
+        setIsTransitioning(true);
+        setTimeout(() => {
+          setCurrentMovieId(movie.id);
+          setIsTransitioning(false);
+        }, 300); // fade out 시간
+      } else {
+        // 첫 로드
+        setCurrentMovieId(movie.id);
+      }
+    }
+  }, [movie?.id, currentMovieId]);
 
   if (!movie) return null;
 
@@ -70,7 +113,7 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
     });
   };
 
-  const handleSubmitReview = () => {
+  const handleSubmitReview = async () => {
     if (!selectedRating) {
       toast({
         title: "평점을 선택해주세요",
@@ -89,21 +132,62 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
       return;
     }
 
-    const newReview = {
-      rating: selectedRating,
-      text: reviewText,
-      author: '나',
-      date: new Date().toLocaleDateString('ko-KR'),
-    };
+    try {
+      // v4.3.2: API 호출로 후기 저장
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // TODO: NextAuth 세션에서 토큰 가져오기
+          // 'Authorization': `Bearer ${session?.accessToken}`
+        },
+        body: JSON.stringify({
+          movieId: movie?.id,
+          rating: selectedRating,
+          commentText: reviewText,
+        }),
+      });
 
-    setReviews([newReview, ...reviews]);
-    setSelectedRating(null);
-    setReviewText('');
+      const data = await response.json();
 
-    toast({
-      title: "✅ 후기가 등록되었어요!",
-      description: "친구들과 후기를 공유했습니다.",
-    });
+      if (response.status === 401) {
+        // 로그인 필요
+        toast({
+          title: "🔐 로그인이 필요해요",
+          description: "Google 계정으로 로그인하면 후기를 작성할 수 있어요.",
+          variant: "destructive",
+        });
+        // TODO: 로그인 모달 열기
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || '후기 등록 실패');
+      }
+
+      // UI에 추가 (임시)
+      const newReview = {
+        rating: selectedRating,
+        text: reviewText,
+        author: '나',
+        date: new Date().toLocaleDateString('ko-KR'),
+      };
+
+      setReviews([newReview, ...reviews]);
+      setSelectedRating(null);
+      setReviewText('');
+
+      toast({
+        title: "✅ 후기가 등록되었어요!",
+        description: "친구들과 후기를 공유했습니다.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "❌ 후기 등록 실패",
+        description: error.message || '다시 시도해주세요.',
+        variant: "destructive",
+      });
+    }
   };
 
   // v4.3: 장르를 배열로 분리
@@ -118,7 +202,9 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
         ${open ? 'translate-x-0' : 'translate-x-full'}`}
     >
       <ScrollArea className="h-full">
-        <div className="relative min-h-full">
+        <div 
+          className={`relative min-h-full transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
+        >{/* v4.3.1: 영화 전환 시 스르륵 fade 효과 */}
               {/* v4.1: Full-Bleed Hero Section with Backdrop */}
               <div className="relative w-full h-[60vh] overflow-hidden">
                 {/* Backdrop Image */}
@@ -237,14 +323,23 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                       <span className="text-muted-foreground text-base">/10</span>
                     </div>
 
-                    {movie.friendsRating && movie.friendsRatingCount && (
+                    {isLoggedIn && movie.friendsRatingCount && movie.friendsRatingCount > 0 && (
                       <>
                         <div className="h-8 w-px bg-border" />
                         <div className="flex items-center gap-2">
                           <Users className="h-6 w-6 text-primary" />
-                          <span className="text-2xl font-bold text-foreground">{movie.friendsRating.toFixed(1)}</span>
+                          <span className="text-2xl font-bold text-foreground">{movie.friendsRating?.toFixed(1) || '0.0'}</span>
                           <span className="text-muted-foreground text-base">/10</span>
-                          <span className="text-sm text-muted-foreground ml-1">({movie.friendsRatingCount})</span>
+                          <span className="text-sm text-muted-foreground ml-1">({movie.friendsRatingCount}명)</span>
+                        </div>
+                      </>
+                    )}
+                    {!isLoggedIn && (
+                      <>
+                        <div className="h-8 w-px bg-border" />
+                        <div className="flex items-center gap-2 opacity-50">
+                          <Users className="h-6 w-6 text-muted-foreground" />
+                          <span className="text-base text-muted-foreground">로그인 후 프렌즈 평점 확인</span>
                         </div>
                       </>
                     )}
@@ -282,6 +377,35 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                     <cite className="text-sm text-muted-foreground not-italic font-medium">— OTT 친구의 한 줄 평</cite>
                   </footer>
                 </blockquote>
+
+                {/* v4.3.2: 예고편 */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
+                    <Play className="h-5 w-5 text-red-500" />
+                    예고편
+                  </h3>
+                  {movie.trailerUrl ? (
+                    <div className="aspect-video rounded-xl overflow-hidden bg-black/50">
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        src={movie.trailerUrl.replace('watch?v=', 'embed/')}
+                        title="영화 예고편"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="w-full h-full"
+                      />
+                    </div>
+                  ) : (
+                    <div className="aspect-video rounded-xl overflow-hidden bg-card border border-border flex items-center justify-center">
+                      <div className="text-center">
+                        <Play className="h-12 w-12 text-muted-foreground/30 mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">예고편이 없습니다</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Accordions */}
                 <Accordion type="multiple" className="space-y-3">
@@ -354,43 +478,79 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-4 pt-4 space-y-4">
-                      {/* Rating Selector */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground">평점</label>
-                        <div className="flex gap-2">
-                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(rating => (
-                            <button
-                              key={rating}
-                              onClick={() => setSelectedRating(rating)}
-                              className={`w-10 h-10 rounded-full text-sm font-medium transition-all
-                                ${selectedRating === rating 
-                                  ? 'bg-primary text-primary-foreground scale-110 shadow-lg' 
-                                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                }`}
-                            >
-                              {rating}
-                            </button>
-                          ))}
+                      {!isLoggedIn ? (
+                        /* 미로그인 상태: 로그인 안내 */
+                        <div className="p-8 bg-muted/50 rounded-xl border-2 border-dashed border-border text-center space-y-4">
+                          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                            <MessageSquare className="h-8 w-8 text-primary" />
+                          </div>
+                          <div className="space-y-2">
+                            <h3 className="text-lg font-bold text-foreground">후기를 남기려면 로그인이 필요해요</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Google 계정으로 로그인하고<br />
+                              친구들과 영화 후기를 공유해보세요!
+                            </p>
+                          </div>
+                          <Button 
+                            onClick={async () => {
+                              const result = await signInWithGoogle();
+                              if (!result) {
+                                toast({
+                                  title: "❌ 로그인 실패",
+                                  description: "Google 로그인에 실패했습니다. Supabase 설정을 확인해주세요.",
+                                  variant: "destructive",
+                                });
+                              }
+                            }}
+                            className="rounded-full"
+                            size="lg"
+                          >
+                            <Users className="h-5 w-5 mr-2" />
+                            Google로 로그인하기
+                          </Button>
                         </div>
-                      </div>
+                      ) : (
+                        /* 로그인 상태: 후기 작성 폼 */
+                        <>
+                          {/* Rating Selector */}
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-foreground">평점</label>
+                            <div className="flex gap-2">
+                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(rating => (
+                                <button
+                                  key={rating}
+                                  onClick={() => setSelectedRating(rating)}
+                                  className={`w-10 h-10 rounded-full text-sm font-medium transition-all
+                                    ${selectedRating === rating 
+                                      ? 'bg-primary text-primary-foreground scale-110 shadow-lg' 
+                                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                    }`}
+                                >
+                                  {rating}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
 
-                      {/* Review Input */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground">후기</label>
-                        <Textarea
-                          placeholder="이 영화 어땠어? 친구들에게 추천해줘!"
-                          value={reviewText}
-                          onChange={(e) => setReviewText(e.target.value)}
-                          className="min-h-[100px] resize-none"
-                        />
-                      </div>
+                          {/* Review Input */}
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-foreground">후기</label>
+                            <Textarea
+                              placeholder="이 영화 어땠어? 친구들에게 추천해줘!"
+                              value={reviewText}
+                              onChange={(e) => setReviewText(e.target.value)}
+                              className="min-h-[100px] resize-none"
+                            />
+                          </div>
 
-                      <Button 
-                        onClick={handleSubmitReview}
-                        className="w-full rounded-full"
-                      >
-                        후기 등록
-                      </Button>
+                          <Button 
+                            onClick={handleSubmitReview}
+                            className="w-full rounded-full"
+                          >
+                            후기 등록
+                          </Button>
+                        </>
+                      )}
 
                       {/* Reviews List */}
                       <div className="space-y-3 mt-6">

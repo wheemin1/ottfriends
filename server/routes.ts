@@ -4,9 +4,10 @@ import { storage } from "./storage";
 import { getOneLiner, translateReviews, UserConfig } from "./lib/gemini";
 import { getMovieDetails, searchMoviesByKeywords, searchMovieByTitle, getAvailableOTTPlatforms, getGenreNames, getTrending, getUpcoming } from "./lib/tmdb";
 import { getCachedMovieData, setCachedMovieData, getIntentCache, setIntentCache } from "./lib/supabase";
-import { callSmartBrain } from "./lib/ai/smartBrain"; // v4.0: Smart Brain only
+import { callSmartBrain } from "./lib/ai/smartBrain";
+import { getCheapResponse } from "./lib/ai/cheapBrain"; // v4.0.4: 0원 방화벽 추가
 
-// v4.0: Simple Pivot - All chat logic removed, recommendation engine only
+// v4.0.4: Cheap Brain → Intent Cache → Smart Brain 순서 (파산 방지 라우팅)
 
 export async function registerRoutes(app: Express): Promise<Server> {
   /**
@@ -29,7 +30,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         taste_profile_titles: userConfig.taste_profile_titles || []
       };
 
-      // v4.0.2: Intent Cache 에러 처리 (테이블 없으면 MISS)
+      // v4.0.4: [1단계] Cheap Brain - 0원 방화벽 (최우선 실행)
+      const cheapResponse = getCheapResponse(message, config.persona);
+      if (cheapResponse) {
+        console.log('💰 [v4.0.4] Cheap Brain 성공 - 비용 $0');
+        return res.json({
+          type: cheapResponse.type,
+          text: cheapResponse.text,
+          keywords: cheapResponse.keywords,
+          recommendations: undefined,
+          config
+        });
+      }
+
+      // v4.0.2: [2단계] Intent Cache 에러 처리 (테이블 없으면 MISS)
       let cachedIntent;
       try {
         cachedIntent = await getIntentCache(message);
@@ -170,6 +184,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           : null,
       })) || [];
 
+      // v4.3.2: 예고편 URL (YouTube)
+      const trailerVideo = movie.videos?.results.find(
+        v => v.site === 'YouTube' && v.type === 'Trailer'
+      );
+      const trailerUrl = trailerVideo 
+        ? `https://www.youtube.com/watch?v=${trailerVideo.key}`
+        : null;
+
+      // v4.3.2: 실제 TMDB 글로벌 후기 (영어 원문)
+      const globalReviews = movie.reviews?.results
+        .slice(0, 5)
+        .map(review => ({
+          author: review.author,
+          content: review.content.slice(0, 300) + (review.content.length > 300 ? '...' : ''),
+          rating: review.author_details?.rating || null,
+        })) || [];
+
+      // v4.3.2: 프렌즈 평점 (사용자들이 남긴 평점 평균)
+      const { getFriendsRating } = await import('./lib/supabase');
+      const friendsRatingData = await getFriendsRating(movieId);
+
       res.json({
         id: movie.id,
         title: movie.title,
@@ -178,6 +213,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         runtime: movie.runtime ? `${movie.runtime}분` : '',
         genre,
         rating: movie.vote_average,
+        friendsRating: friendsRatingData.average,
+        friendsRatingCount: friendsRatingData.count,
         posterUrl: movie.poster_path 
           ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
           : null,
@@ -195,7 +232,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         oneLiner,
         platforms,
         plot: movie.overview,
-        reviews: translatedReviews,
+        reviews: translatedReviews,  // AI 번역된 후기 (기존)
+        globalReviews,  // v4.3.2: 실제 TMDB 후기 (영어 원문)
+        trailerUrl,  // v4.3.2: 예고편 YouTube URL
         cast,
       });
 
@@ -221,19 +260,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { movieId, commentText } = req.body;
+      const { movieId, rating, commentText } = req.body;
 
       if (!movieId || !commentText) {
         return res.status(400).json({ error: 'movieId와 commentText가 필요합니다.' });
       }
 
-      // TODO: Supabase DB에 댓글 저장
+      if (rating && (rating < 1 || rating > 10)) {
+        return res.status(400).json({ error: '평점은 1~10 사이여야 합니다.' });
+      }
+
+      // v4.3.2: Supabase DB에 댓글 저장
+      // TODO Phase 4: NextAuth 토큰 검증 후 userId 추출
       // const userId = verifyToken(authHeader.split(' ')[1]);
-      // await addMovieComment(movieId, userId, commentText);
+      // const { addMovieComment } = await import('./lib/supabase');
+      // await addMovieComment(movieId, userId, rating, commentText);
+      
+      // 임시: 로그인 기능 없이 성공 응답 (Phase 4에서 구현)
+      console.log('[Comments] 후기 등록 요청:', { movieId, rating, commentText });
 
       res.json({ 
         success: true,
-        message: '후기가 등록되었습니다!'
+        message: '후기가 등록되었습니다! (Phase 4에서 DB 저장 구현 예정)'
       });
 
     } catch (error: any) {
