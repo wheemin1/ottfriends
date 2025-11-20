@@ -14,6 +14,7 @@ interface ChatHeaderProps {
   onMyPageClick?: () => void;
   onPersonaClick?: () => void;
   onLoginClick?: () => void;
+  isGuest?: boolean;
   quotaInfo?: {
     recommendations: { used: number; total: number };
     chats: { used: number; total: number };
@@ -25,8 +26,26 @@ export default function ChatHeader({
   onMyPageClick,
   onPersonaClick,
   onLoginClick,
+  isGuest = false,
   quotaInfo
 }: ChatHeaderProps) {
+  // Guest mode: Show minimal header
+  if (isGuest) {
+    return (
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onLoginClick}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          로그인
+        </Button>
+      </div>
+    );
+  }
+
+  // Logged-in mode: Show full header
   return (
     <div className="flex items-center gap-2">
       {/* 프리미엄 버튼 (Gemini PRO 위치) */}

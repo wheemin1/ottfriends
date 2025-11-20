@@ -12,14 +12,14 @@ const suggestions = [
 
 export default function SuggestionChips({ onSuggestionClick }: SuggestionChipsProps) {
   return (
-    <div className="flex gap-2 px-4 pb-3 overflow-x-auto">
+    <div className="flex gap-2 overflow-x-auto">
       {suggestions.map((suggestion, index) => (
         <Button
           key={index}
           variant="outline"
           size="sm"
           onClick={() => onSuggestionClick(suggestion.text)}
-          className="rounded-full whitespace-nowrap flex-shrink-0"
+          className="rounded-full whitespace-nowrap flex-shrink-0 bg-transparent hover:bg-accent/50 border-border/50"
         >
           <span className="mr-1">{suggestion.icon}</span>
           {suggestion.text}

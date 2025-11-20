@@ -1,23 +1,154 @@
 import ChatInterface from "@/components/ChatInterface";
+import { Button } from "@/components/ui/button";
+import { Plus, X } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface GuestChatProps {
   onMenuClick: () => void;
   onLoginClick: () => void;
+  firstMessage?: string;
 }
 
-export default function GuestChat({ onMenuClick, onLoginClick }: GuestChatProps) {
+export default function GuestChat({ onMenuClick, onLoginClick, firstMessage }: GuestChatProps) {
+  const [showLoginTrap, setShowLoginTrap] = useState(false);
+
+  const handleLogin = async () => {
+    const { signInWithGoogle } = await import("@/lib/supabase");
+    await signInWithGoogle();
+  };
+
   return (
-    <div className="h-screen bg-background">
-      <ChatInterface 
-        onMenuClick={onMenuClick}
-        onPremiumClick={() => {}}
-        onMyPageClick={onLoginClick}
-        onPersonaClick={() => {}}
-        onLoginClick={onLoginClick}
-        onRecommendationClick={() => {}}
-        persona="friendly"
-        isGuest={true}
-      />
+    <div className="h-screen bg-background relative">
+      {/* v5.3: Header with Login/Signup Buttons */}
+      <header className="absolute top-0 left-0 right-0 px-4 py-3 flex items-center justify-between z-10 backdrop-blur-sm bg-background/80 border-b border-border/50">
+        {/* Left: Logo + New Chat */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-foreground text-lg">OTT 프렌즈</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowLoginTrap(true)}
+            className="rounded-lg gap-2 text-muted-foreground hover:text-foreground hover:bg-accent"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">새 채팅</span>
+          </Button>
+        </div>
+
+        {/* Right: Login/Signup Buttons */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onLoginClick}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            로그인
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleLogin}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            회원가입
+          </Button>
+        </div>
+      </header>
+
+      {/* Padding for header */}
+      <div className="pt-16 h-screen flex flex-col">
+        <ChatInterface 
+          onMenuClick={onMenuClick}
+          onPremiumClick={() => {}}
+          onMyPageClick={onLoginClick}
+          onPersonaClick={() => {}}
+          onLoginClick={onLoginClick}
+          onRecommendationClick={() => {}}
+          persona="friendly"
+          isGuest={true}
+          firstMessage={firstMessage}
+        />
+      </div>
+
+      {/* v5.2: Login Trap Modal */}
+      <AnimatePresence>
+        {showLoginTrap && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-md z-40"
+              onClick={() => setShowLoginTrap(false)}
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.3, type: "spring", damping: 25 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bg-background border border-border rounded-3xl p-8 w-full max-w-md shadow-2xl relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-4 right-4 rounded-full"
+                  onClick={() => setShowLoginTrap(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+
+                <div className="text-center space-y-6">
+                  <div className="text-6xl mb-4">🧠</div>
+                  <h1 className="text-3xl font-bold">내 영화 취향 저장하고 계속하기</h1>
+                  <p className="text-muted-foreground text-lg">
+                    로그인하면 대화 기록을 저장하고,<br />
+                    더 똑똑한 추천을 받을 수 있어요
+                  </p>
+                </div>
+
+                <div className="space-y-4 mt-8">
+                  <Button
+                    onClick={handleLogin}
+                    className="w-full h-12 text-base"
+                    size="lg"
+                  >
+                    <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    로그인
+                  </Button>
+
+                  <Button
+                    onClick={handleLogin}
+                    variant="outline"
+                    className="w-full h-12 text-base"
+                    size="lg"
+                  >
+                    회원가입
+                  </Button>
+
+                  <Button
+                    onClick={() => setShowLoginTrap(false)}
+                    variant="ghost"
+                    className="w-full text-sm text-muted-foreground"
+                  >
+                    나중에 하기
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

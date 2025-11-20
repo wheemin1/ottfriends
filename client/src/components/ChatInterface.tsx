@@ -33,9 +33,10 @@ interface ChatInterfaceProps {
     chats: { used: number; total: number };
   };
   isGuest?: boolean; // v4.8: 게스트 모드
+  firstMessage?: string; // v5.1: 랜딩에서 입력한 첫 메시지
 }
 
-export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageClick, onPersonaClick, onLoginClick, onRecommendationClick, persona = "friendly", quotaInfo, isGuest = false }: ChatInterfaceProps) {
+export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageClick, onPersonaClick, onLoginClick, onRecommendationClick, persona = "friendly", quotaInfo, isGuest = false, firstMessage }: ChatInterfaceProps) {
   // v4.8: 게스트는 localStorage 사용 안 함
   const [messages, setMessages] = useState<Message[]>(() => {
     if (!isGuest) {
@@ -56,10 +57,16 @@ export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageCli
       }
     }
     
+    // v5.2: firstMessage가 있으면 초기 인사말 스킵
+    if (firstMessage) {
+      return [];
+    }
+    
     return [{ id: '1', text: '안녕! 오늘 기분이 어때?', isAI: true }];
   });
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const firstMessageRef = useRef<string | null>(null);
 
   // v4.8: 게스트 모드에서는 저장 안 함
   useEffect(() => {
@@ -96,6 +103,13 @@ export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageCli
       window.dispatchEvent(new Event('chatSessionsUpdated'));
     }
   }, [messages, isGuest]);
+
+  // v5.1: 랜딩에서 넘어온 첫 메시지 저장
+  useEffect(() => {
+    if (firstMessage && !firstMessageRef.current) {
+      firstMessageRef.current = firstMessage;
+    }
+  }, [firstMessage]);
 
   // v4.3: 세션 이벤트 리스너
   useEffect(() => {
@@ -180,23 +194,32 @@ export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageCli
     }
   };
 
+  // v5.1: 컴포넌트 마운트 후 firstMessage 처리
+  useEffect(() => {
+    if (firstMessageRef.current) {
+      const message = firstMessageRef.current;
+      firstMessageRef.current = null; // 한 번만 실행
+      handleSend(message);
+    }
+  }, []); // 빈 배열: 마운트 시 한 번만 실행
+
   return (
     <div className="h-screen flex flex-col bg-background" data-testid="chat-interface">
-      {/* v3.18 Gemini-style Header: 왼쪽(탐색), 오른쪽(계정) */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-background flex-shrink-0 shadow-sm">
-        {/* 왼쪽: 탐색 영역 */}
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onMenuClick}
-            data-testid="button-menu"
-            className="rounded-lg"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
+      {/* v5.2: 게스트 모드에서는 헤더 숨김 (GuestChat이 자체 헤더 사용) */}
+      {!isGuest && (
+        <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-background flex-shrink-0 shadow-sm">
+          {/* 왼쪽: 탐색 영역 */}
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onMenuClick}
+              data-testid="button-menu"
+              className="rounded-lg"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
           <div className="flex items-center gap-2">
-            <span className="text-xl">🍿</span>
             <span className="font-semibold text-foreground text-lg hidden sm:inline">OTT 친구</span>
           </div>
         </div>
@@ -207,18 +230,20 @@ export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageCli
           onMyPageClick={onMyPageClick}
           onPersonaClick={onPersonaClick}
           onLoginClick={onLoginClick}
+          isGuest={isGuest}
           quotaInfo={quotaInfo}
         />
-      </header>
+        </header>
+      )}
 
-      {/* v3.19 Sticky Input FIX: 채팅 내용만 스크롤 */}
-      <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
-        <div className="space-y-4">
+      {/* v5.5: Chat Content Area - ChatGPT Style (말풍선 너비 제한) */}
+      <div className="flex-1 overflow-y-auto" ref={scrollRef}>
+        <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
           {messages.map((msg) => (
             <div key={msg.id} className="space-y-3">
               <ChatBubble message={msg.text} isAI={msg.isAI} persona={persona} />
               {msg.recommendations && (
-                <div className="flex gap-2 flex-wrap pl-10">
+                <div className="flex gap-2 flex-wrap pl-11">
                   {msg.recommendations.map((rec, idx) => (
                     <PillButton
                       key={rec.id}
@@ -234,13 +259,22 @@ export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageCli
         </div>
       </div>
 
-      {/* v3.19: 입력창 고정 */}
-      <div className="flex-shrink-0 border-t border-border bg-background">
-        {/* v3.26b: 대화 시작 유도 버튼 (메시지가 적을 때만) */}
-        {messages.length <= 2 && (
-          <SuggestionChips onSuggestionClick={handleSend} />
-        )}
-        <ChatInput onSend={handleSend} />
+      {/* v5.3: Floating Input Area - ChatGPT Style */}
+      <div className="flex-shrink-0 border-t border-border/30 bg-background">
+        <div className="max-w-3xl mx-auto px-4 py-4">
+          {/* v3.26b: 대화 시작 유도 버튼 (메시지가 적을 때만) */}
+          {messages.length <= 2 && (
+            <div className="mb-3">
+              <SuggestionChips onSuggestionClick={handleSend} />
+            </div>
+          )}
+          <ChatInput onSend={handleSend} />
+          
+          {/* v5.4: Disclaimer - AI Accuracy Notice */}
+          <p className="text-xs text-center text-muted-foreground/60 mt-3 leading-relaxed">
+            AI 친구도 가끔은 실수할 수 있어요. 영화 정보는 한 번 더 확인해 주세요. 😊
+          </p>
+        </div>
       </div>
     </div>
   );

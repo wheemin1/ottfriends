@@ -4,9 +4,10 @@ import ChatInterface from "@/components/ChatInterface";
 
 interface UserChatProps {
   onNewChat: () => void;
+  firstMessage?: string;
 }
 
-export default function UserChat({ onNewChat }: UserChatProps) {
+export default function UserChat({ onNewChat, firstMessage }: UserChatProps) {
   return (
     <SidebarProvider>
       <div className="h-screen bg-background flex">
@@ -26,6 +27,7 @@ export default function UserChat({ onNewChat }: UserChatProps) {
             onRecommendationClick={() => {}}
             persona="friendly"
             isGuest={false}
+            firstMessage={firstMessage}
           />
         </div>
       </div>

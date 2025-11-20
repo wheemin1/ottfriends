@@ -148,7 +148,7 @@ function Router() {
   // v4.8 Pure Start: 완전히 분리된 컴포넌트 사용
   if (isLoggedIn) {
     return isChatStarted ? (
-      <UserChat onNewChat={handleNewChat} />
+      <UserChat onNewChat={handleNewChat} firstMessage={inputValue} />
     ) : (
       <UserLanding
         onSubmit={handleStartChat}
@@ -162,6 +162,7 @@ function Router() {
     <GuestChat
       onMenuClick={handleSidebarToggle}
       onLoginClick={() => setShowLoginPage(true)}
+      firstMessage={inputValue}
     />
   ) : (
     <GuestLanding
