@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import MovieOverlay from "@/components/MovieOverlay";
+import AuthModal from "@/components/AuthModal";
 
 interface GuestChatProps {
   onMenuClick: () => void;
@@ -12,16 +14,35 @@ interface GuestChatProps {
 
 export default function GuestChat({ onMenuClick, onLoginClick, firstMessage }: GuestChatProps) {
   const [showLoginTrap, setShowLoginTrap] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authVariant, setAuthVariant] = useState<'login' | 'newChat'>('login');
+  const [selectedMovie, setSelectedMovie] = useState<any>(null);
+  const [isLoadingMovie, setIsLoadingMovie] = useState(false);
 
-  const handleLogin = async () => {
-    const { signInWithGoogle } = await import("@/lib/supabase");
-    await signInWithGoogle();
+  const handleRecommendationClick = async (movieId: number) => {
+    setIsLoadingMovie(true);
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    try {
+      const response = await fetch(`/api/movie/${movieId}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const movieData = await response.json();
+      setSelectedMovie(movieData);
+    } catch (error) {
+      console.error('[게스트챗] 영화 상세 정보 로드 실패:', error);
+    } finally {
+      setIsLoadingMovie(false);
+    }
   };
 
   return (
-    <div className="h-screen bg-background relative">
-      {/* v5.3: Header with Login/Signup Buttons */}
-      <header className="absolute top-0 left-0 right-0 px-4 py-3 flex items-center justify-between z-10 backdrop-blur-sm bg-background/80 border-b border-border/50">
+    <div className="h-screen bg-background flex relative">
+      {/* 채팅창 (영화 선택 시 50%, 기본 100%) */}
+      <div className={`h-screen flex flex-col relative transition-all duration-500 ${selectedMovie ? 'w-1/2' : 'w-full'}`}>
+        {/* v5.3: Header with Login/Signup Buttons */}
+        <header className="absolute top-0 left-0 right-0 px-4 py-3 flex items-center justify-between z-10 backdrop-blur-sm bg-background/80 border-b border-border/50">
         {/* Left: Logo + New Chat */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -30,7 +51,10 @@ export default function GuestChat({ onMenuClick, onLoginClick, firstMessage }: G
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setShowLoginTrap(true)}
+            onClick={() => {
+              setAuthVariant('newChat');
+              setShowAuthModal(true);
+            }}
             className="rounded-lg gap-2 text-muted-foreground hover:text-foreground hover:bg-accent"
           >
             <Plus className="h-4 w-4" />
@@ -43,34 +67,41 @@ export default function GuestChat({ onMenuClick, onLoginClick, firstMessage }: G
           <Button
             variant="ghost"
             size="sm"
-            onClick={onLoginClick}
+            onClick={() => {
+              setAuthVariant('login');
+              setShowAuthModal(true);
+            }}
             className="text-muted-foreground hover:text-foreground"
           >
             로그인
           </Button>
           <Button
             size="sm"
-            onClick={handleLogin}
+            onClick={() => {
+              setAuthVariant('login');
+              setShowAuthModal(true);
+            }}
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             회원가입
           </Button>
         </div>
-      </header>
+        </header>
 
-      {/* Padding for header */}
-      <div className="pt-16 h-screen flex flex-col">
-        <ChatInterface 
+        {/* Padding for header */}
+        <div className="pt-16 h-screen flex flex-col">
+          <ChatInterface 
           onMenuClick={onMenuClick}
           onPremiumClick={() => {}}
           onMyPageClick={onLoginClick}
           onPersonaClick={() => {}}
           onLoginClick={onLoginClick}
-          onRecommendationClick={() => {}}
+          onRecommendationClick={handleRecommendationClick}
           persona="friendly"
           isGuest={true}
           firstMessage={firstMessage}
-        />
+          />
+        </div>
       </div>
 
       {/* v5.2: Login Trap Modal */}
@@ -114,7 +145,11 @@ export default function GuestChat({ onMenuClick, onLoginClick, firstMessage }: G
 
                 <div className="space-y-4 mt-8">
                   <Button
-                    onClick={handleLogin}
+                    onClick={() => {
+                      setShowLoginTrap(false);
+                      setAuthVariant('newChat');
+                      setShowAuthModal(true);
+                    }}
                     className="w-full h-12 text-base"
                     size="lg"
                   >
@@ -128,7 +163,11 @@ export default function GuestChat({ onMenuClick, onLoginClick, firstMessage }: G
                   </Button>
 
                   <Button
-                    onClick={handleLogin}
+                    onClick={() => {
+                      setShowLoginTrap(false);
+                      setAuthVariant('newChat');
+                      setShowAuthModal(true);
+                    }}
                     variant="outline"
                     className="w-full h-12 text-base"
                     size="lg"
@@ -149,6 +188,23 @@ export default function GuestChat({ onMenuClick, onLoginClick, firstMessage }: G
           </>
         )}
       </AnimatePresence>
+
+      {/* 영화 상세 패널 (오른쪽 50%) */}
+      <MovieOverlay
+        open={!!selectedMovie}
+        onClose={() => {
+          setSelectedMovie(null);
+          setIsLoadingMovie(false);
+        }}
+        movie={selectedMovie}
+      />
+
+      {/* v6.2: 로그인 모달 */}
+      <AuthModal 
+        open={showAuthModal} 
+        onOpenChange={setShowAuthModal}
+        variant={authVariant}
+      />
     </div>
   );
 }

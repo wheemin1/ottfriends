@@ -143,26 +143,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'Movie not found' });
       }
       console.log('[Routes] TMDB movie data received:', movie.title);
+      console.log('[Routes] Reviews data from TMDB:', movie.reviews);
+      console.log('[Routes] Reviews count:', movie.reviews?.results?.length || 0);
 
-      // v3.9: Supabase 캐시 확인 (99% API 비용 절감)
+      // v4.5: 리뷰 데이터는 이미 tmdb.ts에서 AI 번역 완료 (캐싱 포함)
+      const translatedReviews = movie.reviews?.results || [];
+      console.log('[Routes] Translated reviews:', translatedReviews);
+
+      // v3.9: Supabase 캐시 확인 (한 줄 평만)
       const cached = await getCachedMovieData(movieId);
       let oneLiner: string;
-      let translatedReviews: string[];
 
       if (cached) {
         console.log(`[Cache HIT] 영화 ${movieId} 캐시 사용`);
         oneLiner = cached.one_liner;
-        translatedReviews = cached.translated_reviews;
       } else {
         console.log(`[Cache MISS] 영화 ${movieId} Gemini 호출 시작`);
         // AI 한 줄 평 생성
         oneLiner = await getOneLiner(movie.title, movie.overview);
 
-        // 글로벌 리뷰 번역
-        const reviewTexts = movie.reviews?.results.map(r => r.content) || [];
-        translatedReviews = await translateReviews(reviewTexts);
-
-        // 캐시에 저장
+        // 캐시에 저장 (리뷰는 tmdb.ts에서 이미 캐싱됨)
         await setCachedMovieData(movieId, oneLiner, translatedReviews);
         console.log(`[Cache SAVE] 영화 ${movieId} 캐시 저장 완료`);
       }
@@ -192,14 +192,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? `https://www.youtube.com/watch?v=${trailerVideo.key}`
         : null;
 
-      // v4.3.2: 실제 TMDB 글로벌 후기 (영어 원문)
-      const globalReviews = movie.reviews?.results
-        .slice(0, 5)
-        .map(review => ({
-          author: review.author,
-          content: review.content.slice(0, 300) + (review.content.length > 300 ? '...' : ''),
-          rating: review.author_details?.rating || null,
-        })) || [];
+      // v4.5: 영어 원문 리뷰는 별도로 가져오기 (globalReviews는 사용 안 함)
+      const globalReviews: any[] = [];
 
       // v4.3.2: 프렌즈 평점 (사용자들이 남긴 평점 평균)
       const { getFriendsRating } = await import('./lib/supabase');
@@ -232,11 +226,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         oneLiner,
         platforms,
         plot: movie.overview,
-        reviews: translatedReviews,  // AI 번역된 후기 (기존)
-        globalReviews,  // v4.3.2: 실제 TMDB 후기 (영어 원문)
+        reviews: translatedReviews,  // v4.5: tmdb.ts에서 AI 번역 완료된 한국어 리뷰
         trailerUrl,  // v4.3.2: 예고편 YouTube URL
         cast,
       });
+      
+      console.log('[Routes] Response reviews count:', translatedReviews.length);
 
     } catch (error: any) {
       console.error('Movie details API 오류:', error);

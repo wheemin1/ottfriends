@@ -29,7 +29,6 @@ export default function UserLanding({ onSubmit, onNewChat }: UserLandingProps) {
 
         <div className="flex-1 flex flex-col items-center justify-center p-8">
           <div className="w-full max-w-3xl text-center space-y-12">
-            <div className="text-6xl">🙂</div>
             <h1 className="text-3xl font-bold">오늘 어떤 영화 볼래요?</h1>
             <form onSubmit={handleSubmit} className="relative max-w-3xl mx-auto">
               <Input

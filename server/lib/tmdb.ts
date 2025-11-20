@@ -2,12 +2,22 @@
  * TMDB API 통합 라이브러리
  * v3.7/v3.9: 스마트 셔플 및 캐싱 로직
  * v4.0.1: Supabase dynamic_cache 복구 (메모리 캐시 = Vercel에서 재앙)
+ * v4.5: 영어 리뷰 AI 번역 (왓챠피디아 베스트 리뷰어 스타일)
  */
 
 import { getDynamicCache, setDynamicCache } from './supabase';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+
+// v4.5: Gemini AI 초기화
+function getGenAI() {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY is not set');
+  }
+  return new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+}
 
 export interface TMDBMovie {
   id: number;
@@ -67,7 +77,85 @@ export interface TMDBMovie {
 }
 
 /**
- * v3.9: TMDB append_to_response로 한 번에 모든 데이터 가져오기
+ * v4.5: 영어 리뷰를 한국어 네티즌 말투로 번역 (캐싱 적용)
+ * 스타일: 왓챠피디아 베스트 리뷰어 / 영화 매거진 에디터
+ * - 비속어 금지, 이모지 최소화
+ * - 분석적이고 감성적인 문체
+ * - "~한 작품이다", "~를 느꼈다" 같은 완결된 문장
+ * - Supabase 캐시 (30일) - 한 번 번역하면 재사용
+ */
+async function translateReviewsToKorean(movieId: number, reviews: any[]): Promise<any[]> {
+  if (!reviews || reviews.length === 0) {
+    return [];
+  }
+
+  // 1. 캐시 확인 (영화별로 번역된 리뷰 저장)
+  const cacheKey = `reviews_kr_${movieId}`;
+  const cached = await getDynamicCache(cacheKey);
+  
+  if (cached) {
+    console.log(`💰 [리뷰 캐시 HIT] 영화 ${movieId} - 번역 비용 $0`);
+    return cached as any[];
+  }
+
+  // 2. 캐시 MISS - AI 번역 (비용 발생!)
+  console.log(`💸 [리뷰 캐시 MISS] 영화 ${movieId} - AI 번역 시작...`);
+
+  try {
+    const genAI = getGenAI();
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
+
+    const prompt = `You are a professional film critic and translator. Translate these English movie reviews into Korean with the following style:
+
+Style Guide:
+- Professional magazine editor / Watcha Pedia best reviewer tone
+- Analytical and emotional writing
+- NO slang, NO profanity
+- Minimal emojis
+- Use complete sentences: "~한 작품이다", "~를 느꼈다"
+- Poetic and sophisticated expressions
+
+Reviews to translate (with authors):
+${reviews.map((r, i) => `[Review ${i + 1}] by ${r.author}\n${r.content.substring(0, 500)}`).join('\n\n')}
+
+Return ONLY a JSON array of translated reviews (2-3 sentences each, max 150 characters per review):
+["번역된 리뷰 1", "번역된 리뷰 2", "번역된 리뷰 3"]
+
+Note: Keep the professional tone and preserve the critical insights from the original reviews.`;
+
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    
+    // JSON 파싱
+    const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      const translatedTexts = JSON.parse(jsonMatch[0]);
+      const translatedReviews = translatedTexts.map((text: string, i: number) => ({
+        author: reviews[i]?.author || 'Anonymous',
+        content: text,
+        created_at: reviews[i]?.created_at || new Date().toISOString(),
+        author_details: reviews[i]?.author_details
+      }));
+
+      // 3. Supabase에 캐싱 (30일) - 리뷰는 자주 안 바뀜
+      await setDynamicCache(cacheKey, translatedReviews, 30 * 24);
+      console.log(`✅ [리뷰 캐시 저장] 영화 ${movieId} - 30일간 재사용`);
+
+      return translatedReviews;
+    }
+
+    // 파싱 실패 시 빈 배열 반환
+    return [];
+  } catch (error: any) {
+    console.error('리뷰 번역 오류:', error.message);
+    return [];
+  }
+}
+
+/**
+ * v4.5: 병렬 호출로 영어 리뷰 가져오고 AI 번역
+ * - 기본 정보: ko-KR (한국어 줄거리, 배우 등)
+ * - 리뷰: en-US (영어 리뷰) → AI가 한국어 네티즌 말투로 번역
  */
 export async function getMovieDetails(movieId: number): Promise<TMDBMovie | null> {
   if (!TMDB_API_KEY) {
@@ -76,16 +164,34 @@ export async function getMovieDetails(movieId: number): Promise<TMDBMovie | null
   }
 
   try {
-    // v4.3.2: videos 추가 (예고편 지원)
-    const url = `${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&language=ko-KR&append_to_response=credits,reviews,watch/providers,images,videos`;
-    const response = await fetch(url);
+    // 1. 기본 정보 (한국어)
+    const detailsPromise = fetch(
+      `${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&language=ko-KR&append_to_response=credits,watch/providers,images,videos`
+    );
+
+    // 2. 리뷰 정보 (영어! 여기가 핵심)
+    const reviewsPromise = fetch(
+      `${TMDB_BASE_URL}/movie/${movieId}/reviews?api_key=${TMDB_API_KEY}&language=en-US`
+    );
+
+    const [detailsRes, reviewsRes] = await Promise.all([detailsPromise, reviewsPromise]);
     
-    if (!response.ok) {
-      throw new Error(`TMDB API error: ${response.status}`);
+    if (!detailsRes.ok) {
+      throw new Error(`TMDB API error: ${detailsRes.status}`);
     }
 
-    const data = await response.json();
-    return data;
+    const details = await detailsRes.json();
+    const reviewsData = await reviewsRes.json();
+
+    // 3. 영어 리뷰 3개를 AI로 번역 (한국어 네티즌 말투) + 캐싱
+    const englishReviews = reviewsData.results?.slice(0, 3) || [];
+    const translatedReviews = await translateReviewsToKorean(movieId, englishReviews);
+
+    // 4. 데이터 합치기
+    return { 
+      ...details, 
+      reviews: { results: translatedReviews }
+    };
   } catch (error: any) {
     console.error('TMDB getMovieDetails 오류:', error.message);
     return null;

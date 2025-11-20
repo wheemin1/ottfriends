@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, X, Plus } from "lucide-react";
 import { useState } from "react";
+import AuthModal from "@/components/AuthModal";
 
 interface GuestLandingProps {
   onSubmit: (text: string) => void;
@@ -12,6 +13,8 @@ interface GuestLandingProps {
 export default function GuestLanding({ onSubmit, onLoginClick }: GuestLandingProps) {
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [showLoginTrap, setShowLoginTrap] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authVariant, setAuthVariant] = useState<'login' | 'newChat'>('login');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,11 +22,6 @@ export default function GuestLanding({ onSubmit, onLoginClick }: GuestLandingPro
     if (input.value.trim()) {
       onSubmit(input.value);
     }
-  };
-
-  const handleLogin = async () => {
-    const { signInWithGoogle } = await import("@/lib/supabase");
-    await signInWithGoogle();
   };
 
   return (
@@ -49,7 +47,10 @@ export default function GuestLanding({ onSubmit, onLoginClick }: GuestLandingPro
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setShowLoginTrap(true)}
+            onClick={() => {
+              setAuthVariant('newChat');
+              setShowAuthModal(true);
+            }}
             className="rounded-lg gap-2 text-muted-foreground hover:text-foreground hover:bg-accent"
           >
             <Plus className="h-4 w-4" />
@@ -61,7 +62,10 @@ export default function GuestLanding({ onSubmit, onLoginClick }: GuestLandingPro
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => setShowLoginPopup(true)}
+          onClick={() => {
+            setAuthVariant('login');
+            setShowAuthModal(true);
+          }}
           className="text-muted-foreground hover:text-foreground"
         >
           로그인
@@ -76,16 +80,6 @@ export default function GuestLanding({ onSubmit, onLoginClick }: GuestLandingPro
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          {/* Character */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
-            className="text-8xl"
-          >
-            🙂
-          </motion.div>
-
           {/* Headline */}
           <motion.h1 
             className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight"
@@ -219,7 +213,11 @@ export default function GuestLanding({ onSubmit, onLoginClick }: GuestLandingPro
 
                 <div className="space-y-4 mt-8">
                   <Button
-                    onClick={handleLogin}
+                    onClick={() => {
+                      setShowLoginPopup(false);
+                      setAuthVariant('login');
+                      setShowAuthModal(true);
+                    }}
                     className="w-full h-12 text-base"
                     size="lg"
                   >
@@ -295,7 +293,11 @@ export default function GuestLanding({ onSubmit, onLoginClick }: GuestLandingPro
 
                 <div className="space-y-4 mt-8">
                   <Button
-                    onClick={handleLogin}
+                    onClick={() => {
+                      setShowLoginTrap(false);
+                      setAuthVariant('newChat');
+                      setShowAuthModal(true);
+                    }}
                     className="w-full h-12 text-base"
                     size="lg"
                   >
@@ -309,7 +311,11 @@ export default function GuestLanding({ onSubmit, onLoginClick }: GuestLandingPro
                   </Button>
 
                   <Button
-                    onClick={handleLogin}
+                    onClick={() => {
+                      setShowLoginTrap(false);
+                      setAuthVariant('newChat');
+                      setShowAuthModal(true);
+                    }}
                     variant="outline"
                     className="w-full h-12 text-base"
                     size="lg"
@@ -330,6 +336,13 @@ export default function GuestLanding({ onSubmit, onLoginClick }: GuestLandingPro
           </>
         )}
       </AnimatePresence>
+
+      {/* v6.2: 로그인 모달 */}
+      <AuthModal 
+        open={showAuthModal} 
+        onOpenChange={setShowAuthModal}
+        variant={authVariant}
+      />
     </div>
   );
 }

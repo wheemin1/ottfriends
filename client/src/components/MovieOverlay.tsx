@@ -48,6 +48,18 @@ interface MovieOverlayProps {
 }
 
 export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps) {
+  // v4.5: 리뷰 데이터 디버깅
+  useEffect(() => {
+    if (movie) {
+      console.log('[MovieOverlay] Movie data:', movie);
+      console.log('[MovieOverlay] Reviews:', movie.reviews);
+      console.log('[MovieOverlay] Reviews type:', typeof movie.reviews);
+      console.log('[MovieOverlay] Reviews is array:', Array.isArray(movie.reviews));
+      console.log('[MovieOverlay] Reviews length:', movie.reviews?.length);
+      console.log('[MovieOverlay] Reviews content:', JSON.stringify(movie.reviews, null, 2));
+      console.log('[MovieOverlay] First review:', movie.reviews?.[0]);
+    }
+  }, [movie]);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isWatched, setIsWatched] = useState(false);
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
@@ -426,7 +438,7 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                 </div>
 
                 {/* Accordions */}
-                <Accordion type="multiple" className="space-y-3">
+                <Accordion type="multiple" defaultValue={["reviews"]} className="space-y-3">
                   {/* Plot */}
                   <AccordionItem value="plot" className="border-0">
                     <AccordionTrigger className="rounded-xl px-4 py-4 bg-card hover:no-underline hover-elevate">
@@ -447,17 +459,41 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                     <AccordionTrigger className="rounded-xl px-4 py-4 bg-card hover:no-underline hover-elevate">
                       <div className="flex items-center gap-3">
                         <Globe className="h-5 w-5 text-primary" />
-                        <span className="font-medium">세계는 이 영화를 어떻게 봤어?</span>
+                        <span className="font-medium">세계는 이 영화를 어떻게 봤어? 🌎</span>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-4 pt-4 space-y-3">
-                      {movie.reviews.map((review, idx) => (
-                        <div key={idx} className="p-4 bg-muted rounded-lg border-l-4 border-primary/50">
-                          <p className="text-sm text-foreground leading-relaxed" style={{ lineHeight: '1.7' }}>
-                            {review}
-                          </p>
+                      {(() => {
+                        console.log('[MovieOverlay Render] Checking reviews:', movie.reviews);
+                        console.log('[MovieOverlay Render] Reviews length:', movie.reviews?.length);
+                        return null;
+                      })()}
+                      {movie.reviews && movie.reviews.length > 0 ? (
+                        movie.reviews.map((review, idx) => {
+                          console.log(`[MovieOverlay Render] Review ${idx}:`, review);
+                          const reviewText = typeof review === 'string' ? review : review?.content || JSON.stringify(review);
+                          const reviewAuthor = typeof review === 'object' && review?.author ? review.author : null;
+                          return (
+                            <div key={idx} className="p-4 bg-muted rounded-lg border-l-4 border-primary/50 space-y-2">
+                              {reviewAuthor && (
+                                <div className="flex items-center gap-2 mb-2">
+                                  <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center">
+                                    <span className="text-xs font-semibold text-primary">{reviewAuthor[0].toUpperCase()}</span>
+                                  </div>
+                                  <span className="text-xs font-medium text-slate-400">{reviewAuthor}</span>
+                                </div>
+                              )}
+                              <p className="text-sm text-foreground leading-relaxed" style={{ lineHeight: '1.7' }}>
+                                {reviewText}
+                              </p>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="py-8 text-center">
+                          <p className="text-sm text-muted-foreground">아직 등록된 글로벌 리뷰가 없어요. 😅</p>
                         </div>
-                      ))}
+                      )}
                     </AccordionContent>
                   </AccordionItem>
 
@@ -473,13 +509,12 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                       <div className="grid grid-cols-2 gap-4">
                         {movie.cast.map((actor, idx) => (
                           <div key={idx} className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border">
-                            <Avatar className="h-12 w-12">
-                              <AvatarImage src={actor.photo} alt={actor.name} />
-                              <AvatarFallback>{actor.name[0]}</AvatarFallback>
-                            </Avatar>
+                            <div className="h-14 w-14 rounded-xl overflow-hidden flex-shrink-0 bg-muted">
+                              <img src={actor.photo} alt={actor.name} className="h-full w-full object-cover" />
+                            </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">{actor.name}</p>
-                              <p className="text-xs text-muted-foreground truncate">{actor.character}</p>
+                              <p className="text-sm font-semibold text-white truncate">{actor.name}</p>
+                              <p className="text-xs text-slate-400 truncate">{actor.character}</p>
                             </div>
                           </div>
                         ))}
@@ -492,7 +527,7 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                     <AccordionTrigger className="rounded-xl px-4 py-4 bg-card hover:no-underline hover-elevate">
                       <div className="flex items-center gap-3">
                         <MessageSquare className="h-5 w-5 text-primary" />
-                        <span className="font-medium">친구들 후기</span>
+                        <span className="font-medium">우리 친구들 후기는? ✍️</span>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-4 pt-4 space-y-4">

@@ -19,7 +19,7 @@ export default function SuggestionChips({ onSuggestionClick }: SuggestionChipsPr
           variant="outline"
           size="sm"
           onClick={() => onSuggestionClick(suggestion.text)}
-          className="rounded-full whitespace-nowrap flex-shrink-0 bg-transparent hover:bg-accent/50 border-border/50"
+          className="rounded-full whitespace-nowrap flex-shrink-0 bg-slate-800 border border-slate-600 hover:bg-slate-700 hover:text-yellow-400 transition-colors"
         >
           <span className="mr-1">{suggestion.icon}</span>
           {suggestion.text}

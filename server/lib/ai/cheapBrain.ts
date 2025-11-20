@@ -51,7 +51,7 @@ const smallTalkPatterns = [
   ]},
   
   // 감정 표현 (긍정)
-  { pattern: /좋아|기분\s?좋아|행복해|최고|굿|좋네/i, responses: [
+  { pattern: /기분\s?좋아|행복해|최고|굿|좋네/i, responses: [
     "기분 좋은 날엔 신나는 영화 어때? 🎉",
     "좋다니 나도 기분 좋아! 뭐 볼까? ✨",
     "완전 좋은 날이네! 오늘은 뭐 볼래?"
@@ -77,6 +77,12 @@ const smallTalkPatterns = [
  */
 export function getCheapResponse(message: string, persona: string): CheapResponse | null {
   const trimmedMessage = message.trim();
+  
+  // [v5.11 핵심 수정] "추천"이라는 단어가 있으면 Cheap Brain은 무시하고
+  // 뒤에 있는 Smart Brain/Intent Cache에게 넘긴다! (그래야 영화가 나옴)
+  if (trimmedMessage.includes("추천") || trimmedMessage.includes("보여줘")) {
+    return null;
+  }
   
   // 너무 긴 메시지는 Smart Brain으로
   if (trimmedMessage.length > 30) {

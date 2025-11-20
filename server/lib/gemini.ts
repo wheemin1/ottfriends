@@ -33,8 +33,8 @@ export async function getMainResponse(
   user_config: UserConfig
 ): Promise<GeminiResponse> {
   const genAI = getGenAI();
-  // v3.43: gemini-2.0-flash 사용 (Smart Brain, 안정적)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  // v4.4: gemini-2.0-flash-lite 사용 (비용 절감 & 충분한 성능)
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
   
   // 페르소나별 시스템 프롬프트
   const personaPrompts: { [key: string]: string } = {
@@ -255,8 +255,8 @@ export async function getMainResponseCompressed(
   user_config: UserConfig
 ): Promise<GeminiResponse> {
   const genAI = getGenAI();
-  // v4.0.2: gemini-2.0-flash 사용 (중복 선언 제거)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  // v4.4: gemini-2.0-flash-lite 사용 (비용 절감 & 충분한 성능)
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
   
   // 페르소나별 간결한 프롬프트
   const personaPrompt = user_config.persona === '츤데레 친구'
