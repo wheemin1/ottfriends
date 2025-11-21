@@ -4,7 +4,7 @@
  * 기존 영화는 살짝 밀리고, 새 영화가 그 위를 덮으며 들어온다
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,18 @@ interface MovieOverlayProps {
 }
 
 export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  
+  // v6.15: movieId 변경 시 스크롤 초기화
+  useEffect(() => {
+    if (movie?.id && scrollRef.current) {
+      const scrollContainer = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = 0;
+      }
+    }
+  }, [movie?.id]);
+
   // v4.5: 리뷰 데이터 디버깅
   useEffect(() => {
     if (movie) {
@@ -193,37 +205,18 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
     <div 
       className="fixed right-0 top-0 bottom-0 w-1/2 bg-background border-l border-border shadow-2xl z-50 overflow-hidden"
     >
-      <ScrollArea className="h-full">
-        <AnimatePresence mode="popLayout" initial={false}>
+      <ScrollArea ref={scrollRef} className="h-full">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={movie?.id || 'empty'}
-            initial={{ 
-              x: "100%", 
-              opacity: 0,
-            }}
-            animate={{ 
-              x: 0, 
-              opacity: 1,
-              scale: 1,
-              filter: "brightness(1)",
-            }}
-            exit={{ 
-              x: "-20%", 
-              opacity: 0.7,
-              scale: 0.95,
-              filter: "brightness(0.5)",
-            }}
+            initial={{ x: "100%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ 
-              type: "spring", 
-              stiffness: 350, 
-              damping: 30,
-              exit: { duration: 0.4 }
+              x: { type: "spring", stiffness: 300, damping: 30 },
+              opacity: { duration: 0.2 }
             }}
             className="relative min-h-full"
-            style={{ 
-              zIndex: 50,
-              boxShadow: '-20px 0 50px rgba(0,0,0,0.5)'
-            }}
           >{/* v4.4: iOS 스타일 Parallax Stacking - 깊이감 있는 프리미엄 전환 */}
               {/* v4.1: Full-Bleed Hero Section with Backdrop */}
               <div className="relative w-full h-[60vh] overflow-hidden">
@@ -261,7 +254,7 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
 
                 {/* Hero Content */}
                 <div className="absolute bottom-0 left-0 right-0 p-8">
-                  <div className="flex gap-6 items-end">
+                  <div className="flex gap-8 items-end">
                     {/* 포스터 (왼쪽 하단) */}
                     <div className="flex-shrink-0 w-44 rounded-lg overflow-hidden shadow-2xl border-2 border-white/20">
                       <img
@@ -320,16 +313,15 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
 
               {/* Content Section */}
               <div className="p-8 space-y-8 bg-[#0f172a] min-h-screen">
-                {/* 장르 태그 */}
+                {/* 장르 태그 - v6.13 고스트 스타일 */}
                 <div className="flex gap-2 flex-wrap">
                   {genres.map((genre, idx) => (
-                    <Badge 
-                      key={idx} 
-                      variant="secondary" 
-                      className="px-4 py-2 text-sm font-medium bg-primary/20 text-primary border-primary/30 hover:bg-primary/30"
+                    <span
+                      key={idx}
+                      className="bg-transparent border border-slate-600 text-slate-300 rounded-full px-3 py-1 text-xs font-medium"
                     >
                       {genre}
-                    </Badge>
+                    </span>
                   ))}
                 </div>
 
@@ -392,13 +384,13 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                   </div>
                 )}
 
-                {/* v4.3: Quote Section (AI 한 줄 평 - 매거진 스타일) */}
-                <blockquote className="border-l-4 border-primary pl-8 py-6 bg-muted/30 rounded-r-lg relative">
-                  <span className="absolute -left-3 top-4 text-6xl text-primary/30 font-serif">"</span>
-                  <p className="text-2xl md:text-3xl text-foreground italic leading-relaxed font-light tracking-wide">
+                {/* v6.13: Quote Section (AI 한 줄 평 - 매거진 스타일) */}
+                <blockquote className="pl-8 pr-8 py-6 bg-muted/30 rounded-lg relative">
+                  <span className="absolute left-2 top-2 text-4xl text-yellow-500/20 font-serif">❝</span>
+                  <p className="text-lg md:text-xl text-foreground italic leading-relaxed font-light tracking-wide">
                     {movie.oneLiner}
                   </p>
-                  <span className="absolute -right-2 bottom-2 text-6xl text-primary/30 font-serif">"</span>
+                  <span className="absolute right-2 bottom-2 text-4xl text-yellow-500/20 font-serif">❞</span>
                   <footer className="mt-4 flex items-center gap-2">
                     <Avatar className="h-7 w-7">
                       <AvatarImage src={friendlyAvatar} alt="OTT 친구" />

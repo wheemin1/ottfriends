@@ -20,8 +20,8 @@ export default function GuestChat({ onMenuClick, onLoginClick, firstMessage }: G
   const [isLoadingMovie, setIsLoadingMovie] = useState(false);
 
   const handleRecommendationClick = async (movieId: number) => {
+    // v6.15: 로딩 시작 (이전 영화는 유지하여 패널이 닫히지 않게)
     setIsLoadingMovie(true);
-    await new Promise(resolve => setTimeout(resolve, 100));
     
     try {
       const response = await fetch(`/api/movie/${movieId}`);
@@ -62,29 +62,26 @@ export default function GuestChat({ onMenuClick, onLoginClick, firstMessage }: G
           </Button>
         </div>
 
-        {/* Right: Login/Signup Buttons */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
+        {/* Right: Login + Signup Buttons */}
+        <div className="flex items-center gap-4">
+          <button
             onClick={() => {
               setAuthVariant('login');
               setShowAuthModal(true);
             }}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
           >
             로그인
-          </Button>
-          <Button
-            size="sm"
+          </button>
+          <button
             onClick={() => {
               setAuthVariant('login');
               setShowAuthModal(true);
             }}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            className="bg-white text-black px-4 py-2 rounded-full font-medium text-sm hover:bg-gray-200 transition-colors"
           >
             회원가입
-          </Button>
+          </button>
         </div>
         </header>
 
@@ -150,7 +147,7 @@ export default function GuestChat({ onMenuClick, onLoginClick, firstMessage }: G
                       setAuthVariant('newChat');
                       setShowAuthModal(true);
                     }}
-                    className="w-full h-12 text-base"
+                    className="w-full h-12 text-base bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90 shadow-lg hover:shadow-xl transition-all"
                     size="lg"
                   >
                     <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -169,7 +166,7 @@ export default function GuestChat({ onMenuClick, onLoginClick, firstMessage }: G
                       setShowAuthModal(true);
                     }}
                     variant="outline"
-                    className="w-full h-12 text-base"
+                    className="w-full h-12 text-base border-2 border-primary/40 hover:bg-primary/10 hover:border-primary/60 transition-all"
                     size="lg"
                   >
                     회원가입
@@ -191,7 +188,7 @@ export default function GuestChat({ onMenuClick, onLoginClick, firstMessage }: G
 
       {/* 영화 상세 패널 (오른쪽 50%) */}
       <MovieOverlay
-        open={!!selectedMovie}
+        open={!!selectedMovie || isLoadingMovie}
         onClose={() => {
           setSelectedMovie(null);
           setIsLoadingMovie(false);

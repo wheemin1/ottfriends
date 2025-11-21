@@ -148,23 +148,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // v4.5: 리뷰 데이터는 이미 tmdb.ts에서 AI 번역 완료 (캐싱 포함)
       const translatedReviews = movie.reviews?.results || [];
-      console.log('[Routes] Translated reviews:', translatedReviews);
+      console.log('[Routes] Translated reviews count:', translatedReviews.length);
 
-      // v3.9: Supabase 캐시 확인 (한 줄 평만)
+      // v3.9: Supabase 캐시 확인 (한 줄 평 + 리뷰 통합)
       const cached = await getCachedMovieData(movieId);
       let oneLiner: string;
 
       if (cached) {
-        console.log(`[Cache HIT] 영화 ${movieId} 캐시 사용`);
+        console.log(`✅ [Cache HIT] 영화 ${movieId} - 한 줄 평 & 리뷰 캐시 사용`);
         oneLiner = cached.one_liner;
+        // 리뷰는 이미 tmdb.ts에서 캐시 확인했으므로 여기서는 한 줄 평만 처리
       } else {
-        console.log(`[Cache MISS] 영화 ${movieId} Gemini 호출 시작`);
+        console.log(`💸 [Cache MISS] 영화 ${movieId} - AI 한 줄 평 생성 시작`);
         // AI 한 줄 평 생성
         oneLiner = await getOneLiner(movie.title, movie.overview);
 
-        // 캐시에 저장 (리뷰는 tmdb.ts에서 이미 캐싱됨)
+        // 캐시에 저장 (한 줄 평 + 번역된 리뷰 함께 저장)
         await setCachedMovieData(movieId, oneLiner, translatedReviews);
-        console.log(`[Cache SAVE] 영화 ${movieId} 캐시 저장 완료`);
+        console.log(`✅ [Cache SAVE] 영화 ${movieId} - 한 줄 평 & 리뷰 캐시 저장 완료`);
       }
 
       // OTT 플랫폼 정보

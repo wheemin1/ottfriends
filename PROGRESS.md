@@ -2,8 +2,8 @@
 
 **프로젝트명:** OTT Friend (WhyFirstImpression)  
 **시작일:** 2025-11-17  
-**마지막 업데이트:** 2025-11-20 02:30 KST  
-**전체 완성도:** 84% (Phase 1~v4.5.2 완료)
+**마지막 업데이트:** 2025-11-21 13:45 KST  
+**전체 완성도:** 92% (Phase 1~v6.15 완료)
 
 ---
 
@@ -781,15 +781,67 @@ return isChatStarted ?
 
 **완료일:** 2025-11-20 02:30 KST
 
+### Phase 6: Moonlight 디자인 시스템 (100%) 🆕
+- ✅ v6.9 모노톤 미니멀 디자인 전환
+  - 랜딩페이지 칩 이모지 제거, 모노톤화
+  - 타이포그래피 개선 (font-medium, text-slate-200)
+  - 입력창 실버 글로우 (주황색 제거)
+  - 전송 버튼 애플 스타일 (bg-white, text-black)
+  - 로그인 버튼 텍스트화 (text-slate-300)
+  - spellCheck={false} 적용
+- ✅ v6.9.1 톤 다운 (채팅 UI 차분하게)
+  - 유저 말풍선: bg-white/10 (프로스트 글래스)
+  - AI 말풍선: bg-transparent (투명)
+  - 알약 버튼: bg-slate-800 (모노톤)
+- ✅ v6.9.2 디테일 수정
+  - 유저 말풍선: border-white/10 (유리 질감)
+  - AI 말풍선: 패딩 제거 (텍스트만 띄우기)
+  - 추천 칩: border-white/20 (시인성 강화)
+  - 전송 버튼: hover:bg-slate-200
+  - AI 프로필 제거, 유저 프로필만 유지
+  - 높이 정렬: items-start
+- ✅ v6.10 고스트 칩 (Suggestion Chips)
+  - bg-transparent, border-white/10
+  - 아이콘 + 간단한 텍스트 (추천, 기분, 퀴즈)
+  - hover:bg-white/5
+  - transition: duration-300 (부드러운 호버)
+- ✅ v6.11 헤더 버튼 디자인
+  - 로그인: 텍스트 버튼 (text-slate-300)
+  - 회원가입: 화이트 알약 버튼 (bg-white, text-black)
+  - gap-4로 버튼 간격 확보
+- ✅ v6.12 AuthModal 통일
+  - Google 로그인 버튼: bg-white, h-14, rounded-xl
+  - 노란색/주황색 그라데이션 제거
+  - 애플 스타일 화이트 버튼
+- ✅ v6.13 파이널 디테일 (MovieOverlay)
+  - 포스터-정보 간격: gap-8
+  - 장르 태그: 고스트 스타일 (bg-transparent, border-slate-600)
+  - 한 줄 평: 큰 따옴표 (❝, ❞) text-4xl text-yellow-500/20
+  - OTT 로고: rounded-lg shadow-md, 플랫폼 이름 표시
+- ✅ v6.15 심리스 패널 전환
+  - movieId 변경 시 스크롤 초기화 (scrollTop = 0)
+  - 페이드 전환 (opacity 0→1)
+  - 패널 유지 (open={!!selectedMovie || isLoadingMovie})
+  - 오른쪽 슬라이드 인 애니메이션 (x: 100% → 0)
+  - 스프링 애니메이션 (stiffness: 300, damping: 30)
+
+**완료일:** 2025-11-21 13:45 KST
+
+**디자인 철학:**
+- **색상**: 모노크롬 (slate-*, white/*)
+- **질감**: 프로스트 글래스, 투명도
+- **레퍼런스**: 애플, 토스, 넷플릭스
+- **키워드**: 미니멀, 럭셔리, 생동감
+
 ---
 
 ## 🎯 다음 단계
 
-**Phase 5로 진행** - 채팅 히스토리 & 프리미엄 기능
+**Phase 7로 진행** - 스켈레톤 UI & 로딩 최적화
 
 세부 내용은 `ROADMAP.md` 참조.
 
 ---
 
-**마지막 업데이트:** 2025-11-20 02:30 KST  
-**다음 마일스톤:** Phase 5 - 채팅 저장 & Stripe 결제
+**마지막 업데이트:** 2025-11-21 13:45 KST  
+**다음 마일스톤:** Phase 7 - 스켈레톤 로딩 & 성능 최적화

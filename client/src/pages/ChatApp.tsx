@@ -59,13 +59,11 @@ export default function ChatApp() {
     console.log('[ChatApp] handleRecommendationClick called with movieId:', movieId);
     console.log('[ChatApp] Before setState - isLoadingMovie:', isLoadingMovie);
     
-    // v3.31b: Set loading state first in separate state update
+    // v6.15: 로딩 시작 (이전 영화는 유지하여 패널이 닫히지 않게)
     setIsLoadingMovie(true);
     console.log('[ChatApp] After setIsLoadingMovie(true)');
     
-    // Force a small delay to ensure skeleton renders before starting fetch
-    await new Promise(resolve => setTimeout(resolve, 100));
-    console.log('[ChatApp] After 100ms delay, starting fetch');
+    console.log('[ChatApp] Starting fetch');
     
     try {
       // v3.11: 정확한 TMDB ID로 영화 상세 정보 가져오기
@@ -154,7 +152,7 @@ export default function ChatApp() {
 
         {/* v4.3: 영화 상세 패널 (오른쪽 50%) */}
         <MovieOverlay
-          open={!!selectedMovie}
+          open={!!selectedMovie || isLoadingMovie}
           onClose={() => {
             setSelectedMovie(null);
             setIsLoadingMovie(false);

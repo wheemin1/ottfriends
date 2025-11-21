@@ -3,9 +3,9 @@
  * v3.7/v3.9: 스마트 셔플 및 캐싱 로직
  * v4.0.1: Supabase dynamic_cache 복구 (메모리 캐시 = Vercel에서 재앙)
  * v4.5: 영어 리뷰 AI 번역 (왓챠피디아 베스트 리뷰어 스타일)
+ * v4.5.3: cached_data 테이블로 통합 (중복 제거)
  */
 
-import { getDynamicCache, setDynamicCache } from './supabase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
@@ -82,20 +82,20 @@ export interface TMDBMovie {
  * - 비속어 금지, 이모지 최소화
  * - 분석적이고 감성적인 문체
  * - "~한 작품이다", "~를 느꼈다" 같은 완결된 문장
- * - Supabase 캐시 (30일) - 한 번 번역하면 재사용
+ * - Supabase cached_data 테이블 사용 (routes.ts와 통합)
  */
 async function translateReviewsToKorean(movieId: number, reviews: any[]): Promise<any[]> {
   if (!reviews || reviews.length === 0) {
     return [];
   }
 
-  // 1. 캐시 확인 (영화별로 번역된 리뷰 저장)
-  const cacheKey = `reviews_kr_${movieId}`;
-  const cached = await getDynamicCache(cacheKey);
+  // 1. 캐시 확인 (cached_data 테이블 사용 - routes.ts와 통합)
+  const { getCachedMovieData } = await import('./supabase');
+  const cached = await getCachedMovieData(movieId);
   
-  if (cached) {
+  if (cached?.translated_reviews && cached.translated_reviews.length > 0) {
     console.log(`💰 [리뷰 캐시 HIT] 영화 ${movieId} - 번역 비용 $0`);
-    return cached as any[];
+    return cached.translated_reviews;
   }
 
   // 2. 캐시 MISS - AI 번역 (비용 발생!)
@@ -137,9 +137,8 @@ Note: Keep the professional tone and preserve the critical insights from the ori
         author_details: reviews[i]?.author_details
       }));
 
-      // 3. Supabase에 캐싱 (30일) - 리뷰는 자주 안 바뀜
-      await setDynamicCache(cacheKey, translatedReviews, 30 * 24);
-      console.log(`✅ [리뷰 캐시 저장] 영화 ${movieId} - 30일간 재사용`);
+      // 3. 캐시 저장은 routes.ts에서 한 줄 평과 함께 수행
+      console.log(`✅ [리뷰 번역 완료] 영화 ${movieId} - routes.ts에서 캐싱 예정`);
 
       return translatedReviews;
     }

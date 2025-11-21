@@ -86,12 +86,11 @@ export default function AuthModal({ open, onOpenChange, variant = 'login' }: Aut
         </DialogHeader>
 
         <div className="mt-8 space-y-3">
-          {/* Google 로그인 버튼 (메인) */}
-          <Button
+          {/* Google 로그인 버튼 (메인) - v6.12 애플 스타일 화이트 */}
+          <button
             onClick={handleGoogleLogin}
             disabled={isLoading}
-            className="w-full py-6 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-lg flex items-center justify-center gap-3 transition-all shadow-lg"
-            size="lg"
+            className="w-full h-14 bg-white hover:bg-gray-100 text-black rounded-xl flex items-center justify-center gap-3 transition-all shadow-md font-medium text-lg disabled:opacity-50"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -112,19 +111,7 @@ export default function AuthModal({ open, onOpenChange, variant = 'login' }: Aut
               />
             </svg>
             {isLoading ? '로그인 중...' : current.mainButton}
-          </Button>
-
-          {/* 회원가입 버튼 (newChat일 때만) */}
-          {current.showSignupButton && (
-            <Button
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
-              className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors"
-              size="lg"
-            >
-              회원가입
-            </Button>
-          )}
+          </button>
 
           {/* 나중에 하기 버튼 */}
           <Button

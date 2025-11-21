@@ -33,14 +33,12 @@ export default function ChatHeader({
   if (isGuest) {
     return (
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
           onClick={onLoginClick}
-          className="text-muted-foreground hover:text-foreground"
+          className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
         >
           로그인
-        </Button>
+        </button>
       </div>
     );
   }

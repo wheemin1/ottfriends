@@ -58,18 +58,27 @@ export default function GuestLanding({ onSubmit, onLoginClick }: GuestLandingPro
           </Button>
         </div>
 
-        {/* Right: Login Button */}
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={() => {
-            setAuthVariant('login');
-            setShowAuthModal(true);
-          }}
-          className="text-muted-foreground hover:text-foreground"
-        >
-          로그인
-        </Button>
+        {/* Right: Login + Signup Buttons */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => {
+              setAuthVariant('login');
+              setShowAuthModal(true);
+            }}
+            className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+          >
+            로그인
+          </button>
+          <button
+            onClick={() => {
+              setAuthVariant('login');
+              setShowAuthModal(true);
+            }}
+            className="bg-white text-black px-4 py-2 rounded-full font-medium text-sm hover:bg-gray-200 transition-colors"
+          >
+            회원가입
+          </button>
+        </div>
       </header>
 
       {/* Center Content */}
@@ -82,7 +91,7 @@ export default function GuestLanding({ onSubmit, onLoginClick }: GuestLandingPro
         >
           {/* Headline */}
           <motion.h1 
-            className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight"
+            className="text-4xl md:text-5xl lg:text-6xl font-medium text-slate-200 leading-tight"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
@@ -100,27 +109,16 @@ export default function GuestLanding({ onSubmit, onLoginClick }: GuestLandingPro
               <Input
                 type="text"
                 placeholder="예) 오늘 기분 좀 우울한데 뭐 볼까?"
-                className="w-full h-16 px-6 pr-16 text-lg rounded-3xl border-2 border-border/50 bg-background hover:border-primary/50 focus:border-primary shadow-2xl transition-all"
+                className="w-full h-16 px-6 pr-16 text-lg rounded-3xl border border-white/10 bg-slate-900 focus:border-white/40 focus-visible:ring-1 focus-visible:ring-white/20 focus-visible:ring-offset-0 shadow-2xl transition-all placeholder:text-slate-500"
                 autoFocus
+                spellCheck={false}
               />
-              <Button
+              <button
                 type="submit"
-                size="icon"
-                className="rounded-full h-12 w-12 shadow-md"
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  backgroundColor: '#F97316',
-                  color: 'white',
-                  zIndex: 10
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#EA580C'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F97316'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 bg-white text-black hover:bg-slate-200 transition-all z-10 flex items-center justify-center"
               >
-                <Send className="h-5 w-5" />
-              </Button>
+                <Send className="h-4 w-4" />
+              </button>
             </form>
           </motion.div>
 
@@ -129,22 +127,21 @@ export default function GuestLanding({ onSubmit, onLoginClick }: GuestLandingPro
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
-            className="flex flex-wrap items-center justify-center gap-3 mt-6"
+            className="flex flex-wrap items-center justify-center gap-2 mt-6"
           >
             {[
-              { emoji: "🍿", label: "요즘 핫한거", message: "요즘 가장 핫한 영화 추천해줘" },
-              { emoji: "😭", label: "우울할 때", message: "나 오늘 좀 우울해, 기분 전환할 영화 추천해줘" },
-              { emoji: "❤️", label: "로맨스", message: "설레는 로맨스 영화 보고 싶어" },
-              { emoji: "😱", label: "스릴러", message: "긴장감 넘치는 스릴러 추천해줘" }
+              { label: "요즘 핫한거", message: "요즘 가장 핫한 영화 추천해줘" },
+              { label: "우울할 때", message: "나 오늘 좀 우울해, 기분 전환할 영화 추천해줘" },
+              { label: "로맨스", message: "설레는 로맨스 영화 보고 싶어" },
+              { label: "스릴러", message: "긴장감 넘치는 스릴러 추천해줘" }
             ].map((chip, i) => (
               <Button
                 key={i}
                 variant="ghost"
-                size="lg"
-                className="rounded-full px-6 py-2.5 text-base border border-border/40 hover:bg-accent hover:border-border transition-all"
+                size="sm"
+                className="rounded-full px-3 py-1.5 text-xs bg-transparent border border-white/20 text-slate-400 hover:border-white/30 hover:text-slate-200 transition-all"
                 onClick={() => onSubmit(chip.message)}
               >
-                <span className="mr-2">{chip.emoji}</span>
                 {chip.label}
               </Button>
             ))}
@@ -298,7 +295,7 @@ export default function GuestLanding({ onSubmit, onLoginClick }: GuestLandingPro
                       setAuthVariant('newChat');
                       setShowAuthModal(true);
                     }}
-                    className="w-full h-12 text-base"
+                    className="w-full h-12 text-base bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90 shadow-lg hover:shadow-xl transition-all"
                     size="lg"
                   >
                     <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -317,7 +314,7 @@ export default function GuestLanding({ onSubmit, onLoginClick }: GuestLandingPro
                       setShowAuthModal(true);
                     }}
                     variant="outline"
-                    className="w-full h-12 text-base"
+                    className="w-full h-12 text-base border-2 border-primary/40 hover:bg-primary/10 hover:border-primary/60 transition-all"
                     size="lg"
                   >
                     회원가입

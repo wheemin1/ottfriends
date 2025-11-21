@@ -28,39 +28,25 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="relative w-full" style={{ position: 'relative' }}>
-      <div className="relative w-full" style={{ position: 'relative' }}>
-        <Input
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="메시지를 입력하세요..."
-          disabled={disabled}
-          className="w-full h-14 pl-5 pr-16 text-base rounded-3xl border border-white/10 bg-slate-800/50 backdrop-blur-md hover:bg-slate-800/60 focus:bg-slate-800/70 focus:border-white/20 shadow-lg transition-all placeholder:text-slate-400"
-          data-testid="input-chat"
-          style={{ paddingRight: '4rem' }}
-        />
-        <Button
-          type="button"
-          size="icon"
-          disabled={disabled || !message.trim()}
-          onClick={handleButtonClick}
-          className="absolute right-3 top-1/2 -translate-y-1/2 z-10 rounded-full h-10 w-10 disabled:opacity-50 shadow-md"
-          data-testid="button-send"
-          style={{ 
-            position: 'absolute', 
-            right: '12px', 
-            top: '50%', 
-            transform: 'translateY(-50%)',
-            zIndex: 10,
-            backgroundColor: '#F97316',
-            color: 'white'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#EA580C'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F97316'}
-        >
-          <Send className="h-4 w-4 text-white" />
-        </Button>
-      </div>
+    <form onSubmit={handleSubmit} className="relative w-full">
+      <Input
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        placeholder="메시지를 입력하세요..."
+        disabled={disabled}
+        className="w-full h-14 px-6 pr-16 text-base rounded-3xl border border-white/10 bg-slate-800 focus:border-white/40 focus-visible:ring-1 focus-visible:ring-white/20 focus-visible:ring-offset-0 shadow-xl transition-all duration-300 placeholder:text-slate-500"
+        data-testid="input-chat"
+        spellCheck={false}
+      />
+      <button
+        type="button"
+        disabled={disabled || !message.trim()}
+        onClick={handleButtonClick}
+        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 bg-white text-black hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all z-10 flex items-center justify-center"
+        data-testid="button-send"
+      >
+        <Send className="h-4 w-4" />
+      </button>
     </form>
   );
 }

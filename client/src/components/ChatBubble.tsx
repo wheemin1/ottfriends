@@ -14,36 +14,31 @@ export default function ChatBubble({ message, isAI, persona = "friendly", classN
   const avatarSrc = persona === "friendly" ? friendlyAvatar : tsundereAvatar;
   const avatarEmoji = persona === "friendly" ? "☺️" : "😑";
 
-  // v5.5: ChatGPT 스타일 - 말풍선이 화면을 꽉 채우지 않도록 개선
+  // v6.9.2: AI는 프로필 없이 텍스트만
   if (isAI) {
-    // AI 메시지: 왼쪽 정렬, 아바타 + 말풍선
     return (
       <div
         className={cn("flex w-full justify-start", className)}
         data-testid="bubble-ai"
       >
-        <div className="flex gap-3 items-end max-w-[85%]">
-          <Avatar className="h-8 w-8 flex-shrink-0">
-            <AvatarImage src={avatarSrc} alt="AI" />
-            <AvatarFallback>{avatarEmoji}</AvatarFallback>
-          </Avatar>
-          <div className="bg-muted/50 text-foreground px-6 py-4 rounded-2xl rounded-tl-sm">
-            <p className="text-base font-medium leading-relaxed whitespace-pre-wrap">{message}</p>
+        <div className="flex gap-3 items-start max-w-[85%]">
+          <div className="bg-transparent text-slate-300">
+            <p className="text-base font-normal leading-relaxed whitespace-pre-wrap">{message}</p>
           </div>
         </div>
       </div>
     );
   }
 
-  // v5.7: 사용자 메시지 - 심플 럭셔리 outline 스타일 + Typography 개선
+  // v6.9.2: 사용자 메시지 - 프로필과 말풍선 높이 정렬
   return (
     <div
       className={cn("flex w-full justify-end", className)}
       data-testid="bubble-user"
     >
-      <div className="flex gap-3 items-end max-w-[85%]">
-        <div className="bg-transparent border-2 border-slate-600 text-foreground px-6 py-4 rounded-2xl rounded-tr-sm">
-          <p className="text-base font-medium leading-relaxed whitespace-pre-wrap">{message}</p>
+      <div className="flex gap-3 items-start max-w-[85%]">
+        <div className="bg-white/10 border border-white/10 text-white px-6 py-4 rounded-2xl rounded-tr-sm">
+          <p className="text-base font-normal leading-relaxed whitespace-pre-wrap">{message}</p>
         </div>
         <Avatar className="h-8 w-8 flex-shrink-0 bg-slate-700 border border-slate-600">
           <AvatarFallback className="text-white">👤</AvatarFallback>

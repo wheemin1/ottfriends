@@ -11,10 +11,11 @@ export default function PillButton({ label, onClick, className }: PillButtonProp
     <button
       onClick={onClick}
       className={cn(
-        "px-4 py-2 rounded-full border-2 border-slate-600",
-        "bg-transparent text-foreground text-sm font-medium",
-        "hover:bg-slate-800 hover:text-white hover:border-slate-700",
-        "active:scale-95 transition-all duration-200",
+        "px-4 py-2 rounded-full",
+        "bg-slate-800 text-slate-300 text-sm font-medium",
+        "border border-slate-600",
+        "hover:bg-slate-700",
+        "active:scale-95 transition-all duration-200 shadow-sm",
         className
       )}
       data-testid={`pill-${label.toLowerCase().replace(/\s+/g, '-')}`}
