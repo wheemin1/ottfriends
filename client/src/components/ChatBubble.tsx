@@ -14,7 +14,7 @@ export default function ChatBubble({ message, isAI, persona = "friendly", classN
   const avatarSrc = persona === "friendly" ? friendlyAvatar : tsundereAvatar;
   const avatarEmoji = persona === "friendly" ? "☺️" : "😑";
 
-  // v6.9.2: AI는 프로필 없이 텍스트만
+  // v6.9.3: AI 텍스트 밝기 강화 (가독성 향상)
   if (isAI) {
     return (
       <div
@@ -22,7 +22,7 @@ export default function ChatBubble({ message, isAI, persona = "friendly", classN
         data-testid="bubble-ai"
       >
         <div className="flex gap-3 items-start max-w-[85%]">
-          <div className="bg-transparent text-slate-300">
+          <div className="bg-transparent text-gray-100">
             <p className="text-base font-normal leading-relaxed whitespace-pre-wrap">{message}</p>
           </div>
         </div>
@@ -30,14 +30,14 @@ export default function ChatBubble({ message, isAI, persona = "friendly", classN
     );
   }
 
-  // v6.9.2: 사용자 메시지 - 프로필과 말풍선 높이 정렬
+  // v6.9.3: 사용자 메시지 - 명암비 강화 (테두리/배경 밝기 UP)
   return (
     <div
       className={cn("flex w-full justify-end", className)}
       data-testid="bubble-user"
     >
       <div className="flex gap-3 items-start max-w-[85%]">
-        <div className="bg-white/10 border border-white/10 text-white px-6 py-4 rounded-2xl rounded-tr-sm">
+        <div className="bg-white/10 border border-white/20 text-white px-6 py-4 rounded-2xl rounded-tr-sm shadow-lg">
           <p className="text-base font-normal leading-relaxed whitespace-pre-wrap">{message}</p>
         </div>
         <Avatar className="h-8 w-8 flex-shrink-0 bg-slate-700 border border-slate-600">

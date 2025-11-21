@@ -38,11 +38,22 @@ export default function GuestChat({ onMenuClick, onLoginClick, firstMessage }: G
   };
 
   return (
-    <div className="h-screen bg-background flex relative">
+    <div className="h-screen bg-background flex relative overflow-hidden">
+      {/* v7.5: Ambient Glow Background - 은은하게 조정 */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div 
+          className="absolute top-[20%] left-[15%] w-[500px] h-[500px]"
+          style={{
+            background: 'radial-gradient(circle, rgba(168, 85, 247, 0.06) 0%, rgba(139, 92, 246, 0.03) 40%, transparent 70%)',
+            filter: 'blur(80px)'
+          }}
+        />
+      </div>
+
       {/* 채팅창 (영화 선택 시 50%, 기본 100%) */}
-      <div className={`h-screen flex flex-col relative transition-all duration-500 ${selectedMovie ? 'w-1/2' : 'w-full'}`}>
-        {/* v5.3: Header with Login/Signup Buttons */}
-        <header className="absolute top-0 left-0 right-0 px-4 py-3 flex items-center justify-between z-10 backdrop-blur-sm bg-background/80 border-b border-border/50">
+      <div className={`h-screen flex flex-col relative z-10 transition-all duration-500 ${selectedMovie ? 'w-1/2' : 'w-full'}`}>
+        {/* Header */}
+        <header className="flex-none px-4 py-3 flex items-center justify-between backdrop-blur-sm bg-background/50 border-b border-border/50">
         {/* Left: Logo + New Chat */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -85,8 +96,8 @@ export default function GuestChat({ onMenuClick, onLoginClick, firstMessage }: G
         </div>
         </header>
 
-        {/* Padding for header */}
-        <div className="pt-16 h-screen flex flex-col">
+        {/* Chat Content */}
+        <div className="flex-1 overflow-hidden">
           <ChatInterface 
           onMenuClick={onMenuClick}
           onPremiumClick={() => {}}

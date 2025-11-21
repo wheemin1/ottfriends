@@ -42,7 +42,7 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
         type="button"
         disabled={disabled || !message.trim()}
         onClick={handleButtonClick}
-        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 bg-white text-black hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all z-10 flex items-center justify-center"
+        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 bg-white text-black hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all z-10 flex items-center justify-center"
         data-testid="button-send"
       >
         <Send className="h-4 w-4" />

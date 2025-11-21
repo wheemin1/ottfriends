@@ -204,7 +204,7 @@ export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageCli
   }, []); // 빈 배열: 마운트 시 한 번만 실행
 
   return (
-    <div className="h-screen flex flex-col bg-background" data-testid="chat-interface">
+    <div className="h-full flex flex-col bg-transparent" data-testid="chat-interface">
       {/* v5.2: 게스트 모드에서는 헤더 숨김 (GuestChat이 자체 헤더 사용) */}
       {!isGuest && (
         <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-background flex-shrink-0 shadow-sm">
