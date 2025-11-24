@@ -33,7 +33,18 @@ export default function UserChat({ onNewChat, firstMessage }: UserChatProps) {
 
   return (
     <SidebarProvider>
-      <div className="h-screen bg-background flex">
+      <div className="h-screen bg-background flex relative overflow-hidden">
+        {/* v7.9: Fixed Aurora Background - 화면 전체에 고정 (스크롤/영역과 무관) */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+          <div 
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
+            style={{
+              background: 'radial-gradient(circle, rgba(168, 85, 247, 0.18) 0%, rgba(139, 92, 246, 0.1) 40%, transparent 70%)',
+              filter: 'blur(100px)'
+            }}
+          />
+        </div>
+
         <AppSidebar 
           onNewChat={onNewChat}
           onLoadSession={() => {}}
@@ -41,7 +52,7 @@ export default function UserChat({ onNewChat, firstMessage }: UserChatProps) {
         />
 
         {/* 채팅창 (영화 선택 시 사이드바 제외하고 50%, 기본 100%) */}
-        <div className={`overflow-hidden transition-all duration-500 ${selectedMovie ? 'w-1/2' : 'flex-1'}`}>
+        <div className={`overflow-hidden transition-all duration-500 relative z-10 ${selectedMovie ? 'w-1/2' : 'flex-1'}`}>
           <ChatInterface 
             onMenuClick={() => {}}
             onPremiumClick={() => {}}

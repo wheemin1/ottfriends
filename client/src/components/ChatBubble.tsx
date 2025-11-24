@@ -30,14 +30,14 @@ export default function ChatBubble({ message, isAI, persona = "friendly", classN
     );
   }
 
-  // v6.9.3: 사용자 메시지 - 명암비 강화 (테두리/배경 밝기 UP)
+  // v7.8: 사용자 메시지 - 고스트 스타일 (Ghost Style)
   return (
     <div
       className={cn("flex w-full justify-end", className)}
       data-testid="bubble-user"
     >
       <div className="flex gap-3 items-start max-w-[85%]">
-        <div className="bg-white/10 border border-white/20 text-white px-6 py-4 rounded-2xl rounded-tr-sm shadow-lg">
+        <div className="bg-white/10 border border-white/5 text-white px-6 py-4 rounded-2xl rounded-tr-sm shadow-lg">
           <p className="text-base font-normal leading-relaxed whitespace-pre-wrap">{message}</p>
         </div>
         <Avatar className="h-8 w-8 flex-shrink-0 bg-slate-700 border border-slate-600">

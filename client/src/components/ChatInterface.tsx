@@ -207,7 +207,7 @@ export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageCli
     <div className="h-full flex flex-col bg-transparent" data-testid="chat-interface">
       {/* v5.2: 게스트 모드에서는 헤더 숨김 (GuestChat이 자체 헤더 사용) */}
       {!isGuest && (
-        <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-background flex-shrink-0 shadow-sm">
+        <header className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-transparent backdrop-blur-md flex-shrink-0">
           {/* 왼쪽: 탐색 영역 */}
           <div className="flex items-center gap-3">
             <Button
@@ -259,8 +259,8 @@ export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageCli
         </div>
       </div>
 
-      {/* v5.3: Floating Input Area - ChatGPT Style */}
-      <div className="flex-shrink-0 border-t border-border/30 bg-background">
+      {/* v7.9: Transparent Input Container - 오로라가 바닥까지 비치도록 */}
+      <div className="flex-shrink-0 border-t border-white/5 bg-transparent backdrop-blur-md">
         <div className="max-w-3xl mx-auto px-4 py-4">
           {/* v3.26b: 대화 시작 유도 버튼 (메시지가 적을 때만) */}
           {messages.length <= 2 && (

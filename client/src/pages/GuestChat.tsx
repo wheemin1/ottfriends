@@ -39,21 +39,21 @@ export default function GuestChat({ onMenuClick, onLoginClick, firstMessage }: G
 
   return (
     <div className="h-screen bg-background flex relative overflow-hidden">
-      {/* v7.5: Ambient Glow Background - 은은하게 조정 */}
+      {/* v7.9: Fixed Aurora Background - 화면 전체에 고정 (스크롤/영역과 무관) */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div 
-          className="absolute top-[20%] left-[15%] w-[500px] h-[500px]"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
           style={{
-            background: 'radial-gradient(circle, rgba(168, 85, 247, 0.06) 0%, rgba(139, 92, 246, 0.03) 40%, transparent 70%)',
-            filter: 'blur(80px)'
+            background: 'radial-gradient(circle, rgba(168, 85, 247, 0.18) 0%, rgba(139, 92, 246, 0.1) 40%, transparent 70%)',
+            filter: 'blur(100px)'
           }}
         />
       </div>
 
       {/* 채팅창 (영화 선택 시 50%, 기본 100%) */}
       <div className={`h-screen flex flex-col relative z-10 transition-all duration-500 ${selectedMovie ? 'w-1/2' : 'w-full'}`}>
-        {/* Header */}
-        <header className="flex-none px-4 py-3 flex items-center justify-between backdrop-blur-sm bg-background/50 border-b border-border/50">
+        {/* v7.9: Transparent Glass Header - 오로라가 비치도록 */}
+        <header className="flex-none px-4 py-3 flex items-center justify-between backdrop-blur-md bg-transparent border-b border-white/5">
         {/* Left: Logo + New Chat */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">

@@ -209,10 +209,20 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
   if (!open) return null;
 
   return (
-    <div 
-      className="fixed right-0 top-0 bottom-0 w-1/2 bg-background border-l border-border shadow-2xl z-[10] overflow-hidden"
-    >
-      <ScrollArea ref={scrollRef} className="h-full">
+    <div className="fixed right-0 top-0 bottom-0 w-1/2 bg-background border-l border-border shadow-2xl z-[100] overflow-hidden">
+      {/* 원복: 안정적인 구조 */}
+      <div className="relative w-full h-full">
+        {/* Close Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="absolute top-4 right-4 z-[999] bg-black/50 hover:bg-black/70 text-white rounded-full w-10 h-10 flex items-center justify-center"
+        >
+          <X className="h-5 w-5" />
+        </Button>
+
+        <ScrollArea ref={scrollRef} className="h-full w-full">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={movie?.id || 'empty'}
@@ -223,10 +233,10 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
               x: { type: "spring", stiffness: 300, damping: 30 },
               opacity: { duration: 0.2 }
             }}
-            className="relative min-h-full"
-          >{/* v4.4: iOS 스타일 Parallax Stacking - 깊이감 있는 프리미엄 전환 */}
+            className="relative w-full h-full p-0 m-0"
+          >{/* v8.9: Top Align - 여백 완전 제거 */}
               {/* v7.1: Cinematic Hero Section with Trailer or Backdrop */}
-              <div className="relative w-full h-[60vh] overflow-hidden">
+              <div className="relative w-full h-[60vh] overflow-hidden m-0 p-0">
                 {/* v7.1: YouTube Trailer Background (자동재생, 음소거, 반복) */}
                 {(() => {
                   const videoId = getYouTubeVideoId(movie.trailerUrl);
@@ -266,16 +276,6 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                   return <div className="absolute inset-0 bg-gradient-to-b from-muted via-muted/80 to-background" />;
                 })()}
 
-                {/* Close Button */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onClose}
-                  className="absolute top-6 left-6 z-30 rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm"
-                >
-                  <X className="h-5 w-5" />
-                </Button>
-
                 {/* IMDb Rating Badge (우상단) - v7.2: 소수점 첫째 자리까지 */}
                 <div className="absolute top-6 right-6 z-20">
                   <div className="flex flex-col items-center justify-center w-24 h-24 rounded-full bg-yellow-500 backdrop-blur-sm border-4 border-yellow-400/40 shadow-2xl">
@@ -287,34 +287,44 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                 {/* v7.4: Hero Content - 중앙 정렬 & 여백 확보 */}
                 <div className="absolute bottom-0 left-0 right-0 py-10 px-8">
                   <div className="max-w-5xl mx-auto flex gap-8 items-end">
-                    {/* 포스터 (왼쪽 하단) */}
-                    <div className="flex-shrink-0 w-44 rounded-lg overflow-hidden shadow-2xl border-2 border-white/20">
+                    {/* v8.1: 포스터 (왼쪽 하단) - 높이 자동 조정 */}
+                    <div className="flex-shrink-0 w-44 rounded-lg overflow-hidden shadow-2xl border-2 border-white/20 h-fit">
                       <img
                         src={movie.posterUrl}
                         alt={movie.title}
-                        className="w-full h-auto object-cover"
+                        className="w-full h-auto object-cover mb-0"
                       />
                     </div>
 
-                    {/* v7.3: 제목 + 정보 (한글 우선, 긴 제목 방어) */}
-                    <div className="flex-1 space-y-3 pb-2 mb-6">
-                      {/* 메인 제목: 한글 우선 (최대 2줄) */}
-                      <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-tight drop-shadow-2xl line-clamp-2 overflow-hidden">
+                    {/* v7.10: Typography Hierarchy - 압도적 강약 조절 */}
+                    <div className="flex-1 space-y-4 pb-2 mb-4">
+                      {/* 메인 제목: 압도적 강조 (최대 2줄) */}
+                      <h1 className="text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-tight drop-shadow-2xl line-clamp-2 overflow-hidden">
                         {movie.title}
                       </h1>
 
-                      {/* 서브 제목: 영문/원제 (1줄 제한) */}
+                      {/* 서브 제목: 투명도로 보조 역할 (1줄 제한) */}
                       {movie.originalTitle && movie.originalTitle !== movie.title && (
-                        <p className="text-lg text-white/70 font-medium drop-shadow-lg truncate block">
+                        <p className="text-lg text-white/60 font-normal drop-shadow-lg truncate block">
                           {movie.originalTitle}
                         </p>
                       )}
 
-                      {/* 메타데이터 */}
-                      <div className="flex items-center gap-4 text-base text-white/80 font-medium pt-1">
-                        <span>{movie.year}</span>
-                        <span>•</span>
-                        <span>{movie.runtime}</span>
+                      {/* v8.1: 메타데이터 + 장르 태그 (한 줄로 통합) */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-2 text-sm text-white/70 font-normal">
+                          <span>{movie.year}</span>
+                          <span>•</span>
+                          <span>{movie.runtime}</span>
+                        </div>
+                        {genres.map((genre, idx) => (
+                          <span
+                            key={idx}
+                            className="bg-transparent border border-slate-600 text-slate-300 rounded-full px-3 py-1 text-xs font-medium"
+                          >
+                            {genre}
+                          </span>
+                        ))}
                       </div>
 
                       {/* v7.5: 액션 버튼 - 반투명 배경으로 덩어리감 강화 */}
@@ -343,21 +353,10 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                 </div>
               </div>
 
-              {/* v7.4: Content Section - 은은한 배경 */}
-              <div className="p-8 space-y-8 min-h-screen relative">
+              {/* v8.1: Content Section - 축소된 간격 */}
+              <div className="p-8 pt-6 space-y-4 min-h-screen relative">
                 {/* 배경 그라데이션 */}
                 <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-900/95 to-slate-900/90 -z-10" />
-                {/* v7.2: 장르 태그 - 제목과 간격 줄임 */}
-                <div className="flex gap-2 flex-wrap -mt-4">
-                  {genres.map((genre, idx) => (
-                    <span
-                      key={idx}
-                      className="bg-transparent border border-slate-600 text-slate-300 rounded-full px-3 py-1 text-xs font-medium"
-                    >
-                      {genre}
-                    </span>
-                  ))}
-                </div>
 
                 {/* 평점 + OTT 정보 */}
                 <div className="space-y-4">
@@ -365,7 +364,7 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                   <div className="flex items-center gap-6">
                     <div className="flex items-center gap-2">
                       <Star className="h-6 w-6 text-yellow-500 fill-current" />
-                      <span className="text-2xl font-bold text-foreground">{movie.rating}</span>
+                      <span className="text-2xl font-bold text-foreground">{movie.rating.toFixed(1)}</span>
                       <span className="text-muted-foreground text-base">/10</span>
                     </div>
 
@@ -668,5 +667,6 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
           </AnimatePresence>
         </ScrollArea>
       </div>
+    </div>
   );
 }

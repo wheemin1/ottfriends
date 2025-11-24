@@ -34,7 +34,7 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
         onChange={(e) => setMessage(e.target.value)}
         placeholder="메시지를 입력하세요..."
         disabled={disabled}
-        className="w-full h-14 px-6 pr-16 text-base rounded-3xl border border-white/10 bg-slate-800 focus:border-white/40 focus-visible:ring-1 focus-visible:ring-white/20 focus-visible:ring-offset-0 shadow-xl transition-all duration-300 placeholder:text-slate-500"
+        className="w-full h-14 px-6 pr-16 text-base rounded-full border border-white/10 bg-slate-800/50 backdrop-blur-xl focus:border-white/40 focus-visible:ring-1 focus-visible:ring-white/20 focus-visible:ring-offset-0 shadow-2xl transition-all duration-300 placeholder:text-slate-500"
         data-testid="input-chat"
         spellCheck={false}
       />

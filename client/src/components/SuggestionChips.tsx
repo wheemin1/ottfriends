@@ -17,7 +17,7 @@ export default function SuggestionChips({ onSuggestionClick }: SuggestionChipsPr
         <button
           key={index}
           onClick={() => onSuggestionClick(suggestion.text)}
-          className="rounded-full flex-shrink-0 bg-transparent border border-white/10 text-slate-400 hover:bg-white/5 hover:border-white/30 hover:text-slate-200 transition-all duration-300 px-3 py-2 text-xs flex items-center gap-1.5"
+          className="rounded-full flex-shrink-0 bg-transparent border border-white/20 text-slate-400 hover:bg-white/5 hover:border-white/30 hover:text-slate-200 transition-all duration-300 px-3 py-2 text-xs flex items-center gap-1.5"
         >
           <span>{suggestion.icon}</span>
           <span className="font-medium">{suggestion.label}</span>

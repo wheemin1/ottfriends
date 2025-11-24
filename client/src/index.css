@@ -357,3 +357,11 @@ html, body {
     inset: -1px;
   }
 }
+
+/* 원복: 기본 Radix UI 패딩 제거 */
+div[role="dialog"] > div,
+[data-radix-collection-item],
+[data-state="open"] {
+  padding: 0 !important;
+  gap: 0 !important;
+}
