@@ -209,20 +209,22 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
   if (!open) return null;
 
   return (
-    <div className="fixed right-0 top-0 bottom-0 w-1/2 bg-background border-l border-border shadow-2xl z-[100] overflow-hidden">
-      {/* 원복: 안정적인 구조 */}
-      <div className="relative w-full h-full">
-        {/* Close Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          className="absolute top-4 right-4 z-[999] bg-black/50 hover:bg-black/70 text-white rounded-full w-10 h-10 flex items-center justify-center"
-        >
-          <X className="h-5 w-5" />
-        </Button>
+    <div className="fixed right-0 top-0 bottom-0 w-1/2 bg-background border-l border-border shadow-2xl z-[100]">
+      {/* v8.2: 최종 수정 - 버튼을 독립적으로 배치 */}
+      <div className="relative w-full h-full overflow-hidden">
+        {/* Close Button - fixed로 패널 내부에 고정 */}
+        <div className="absolute top-6 right-6 z-[999]">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="rounded-full w-12 h-12 bg-black/80 hover:bg-black text-white border-2 border-white/30 shadow-2xl flex items-center justify-center"
+          >
+            <X className="h-6 w-6" />
+          </Button>
+        </div>
 
-        <ScrollArea ref={scrollRef} className="h-full w-full">
+        <ScrollArea ref={scrollRef} className="h-full w-full absolute inset-0">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={movie?.id || 'empty'}
@@ -233,10 +235,11 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
               x: { type: "spring", stiffness: 300, damping: 30 },
               opacity: { duration: 0.2 }
             }}
-            className="relative w-full h-full p-0 m-0"
-          >{/* v8.9: Top Align - 여백 완전 제거 */}
+            className="relative w-full h-auto"
+            style={{ padding: 0, margin: 0 }}
+          >{/* v8.2: 완전한 여백 제거 */}
               {/* v7.1: Cinematic Hero Section with Trailer or Backdrop */}
-              <div className="relative w-full h-[60vh] overflow-hidden m-0 p-0">
+              <div className="relative w-full h-[60vh] overflow-hidden" style={{ margin: 0, padding: 0 }}>
                 {/* v7.1: YouTube Trailer Background (자동재생, 음소거, 반복) */}
                 {(() => {
                   const videoId = getYouTubeVideoId(movie.trailerUrl);
@@ -276,13 +279,6 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                   return <div className="absolute inset-0 bg-gradient-to-b from-muted via-muted/80 to-background" />;
                 })()}
 
-                {/* IMDb Rating Badge (우상단) - v7.2: 소수점 첫째 자리까지 */}
-                <div className="absolute top-6 right-6 z-20">
-                  <div className="flex flex-col items-center justify-center w-24 h-24 rounded-full bg-yellow-500 backdrop-blur-sm border-4 border-yellow-400/40 shadow-2xl">
-                    <span className="text-3xl font-black text-black">{movie.rating.toFixed(1)}</span>
-                    <span className="text-xs text-black/80 font-bold tracking-wide">IMDb</span>
-                  </div>
-                </div>
 
                 {/* v7.4: Hero Content - 중앙 정렬 & 여백 확보 */}
                 <div className="absolute bottom-0 left-0 right-0 py-10 px-8">
@@ -363,8 +359,9 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                   {/* TMDB + Friends Rating */}
                   <div className="flex items-center gap-6">
                     <div className="flex items-center gap-2">
-                      <Star className="h-6 w-6 text-yellow-500 fill-current" />
-                      <span className="text-2xl font-bold text-foreground">{movie.rating.toFixed(1)}</span>
+                      <Star className="h-6 w-6 text-yellow-400 fill-yellow-400" />
+                      <span className="text-white font-bold text-xl">{movie.rating.toFixed(1)}</span>
+                      <span className="text-xs font-bold text-yellow-400 border border-yellow-400 px-1.5 py-0.5 rounded">IMDb</span>
                       <span className="text-muted-foreground text-base">/10</span>
                     </div>
 

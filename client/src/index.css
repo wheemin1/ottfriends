@@ -358,10 +358,21 @@ html, body {
   }
 }
 
-/* 원복: 기본 Radix UI 패딩 제거 */
+/* v8.1: Radix UI 패딩 완전 제거 */
 div[role="dialog"] > div,
 [data-radix-collection-item],
 [data-state="open"] {
   padding: 0 !important;
   gap: 0 !important;
+}
+
+/* ScrollArea viewport 패딩 제거 */
+[data-radix-scroll-area-viewport] {
+  padding: 0 !important;
+}
+
+[data-radix-scroll-area-viewport] > div {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
