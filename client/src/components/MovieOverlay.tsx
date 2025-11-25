@@ -212,13 +212,13 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
     <div className="fixed right-0 top-0 bottom-0 w-1/2 bg-background border-l border-border shadow-2xl z-[100]">
       {/* v8.2: 최종 수정 - 버튼을 독립적으로 배치 */}
       <div className="relative w-full h-full overflow-hidden">
-        {/* Close Button - fixed로 패널 내부에 고정 */}
+        {/* v9.0: The Shining Button - 강화된 검은 아우라로 무조건 잘 보임 */}
         <div className="absolute top-6 right-6 z-[999]">
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="rounded-full w-12 h-12 bg-black/80 hover:bg-black text-white border-2 border-white/30 shadow-2xl flex items-center justify-center"
+            className="rounded-full w-12 h-12 bg-black/60 hover:bg-black/80 text-white border border-white/20 shadow-2xl backdrop-blur-md flex items-center justify-center"
           >
             <X className="h-6 w-6" />
           </Button>
@@ -349,8 +349,8 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                 </div>
               </div>
 
-              {/* v8.1: Content Section - 축소된 간격 */}
-              <div className="p-8 pt-6 space-y-4 min-h-screen relative">
+              {/* v9.1: Content Section - 아코디언 레이아웃 복구 */}
+              <div className="p-8 pt-6 space-y-4 pb-20 relative">
                 {/* 배경 그라데이션 */}
                 <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-900/95 to-slate-900/90 -z-10" />
 
