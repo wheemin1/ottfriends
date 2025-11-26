@@ -14,7 +14,7 @@ export default function ChatBubble({ message, isAI, persona = "friendly", classN
   const avatarSrc = persona === "friendly" ? friendlyAvatar : tsundereAvatar;
   const avatarEmoji = persona === "friendly" ? "☺️" : "😑";
 
-  // v6.9.3: AI 텍스트 밝기 강화 (가독성 향상)
+  // v21.0: AI 메시지 - 투명 유리 질감 (GuestChat Sync)
   if (isAI) {
     return (
       <div
@@ -22,7 +22,7 @@ export default function ChatBubble({ message, isAI, persona = "friendly", classN
         data-testid="bubble-ai"
       >
         <div className="flex gap-3 items-start max-w-[85%]">
-          <div className="bg-transparent text-gray-100">
+          <div className="bg-white/5 border border-white/10 text-slate-200 px-6 py-4 rounded-2xl rounded-tl-sm shadow-lg backdrop-blur-sm">
             <p className="text-base font-normal leading-relaxed whitespace-pre-wrap">{message}</p>
           </div>
         </div>
@@ -30,14 +30,14 @@ export default function ChatBubble({ message, isAI, persona = "friendly", classN
     );
   }
 
-  // v7.8: 사용자 메시지 - 고스트 스타일 (Ghost Style)
+  // v21.0: 사용자 메시지 - 은은한 보라/회색 틴트 (GuestChat Sync)
   return (
     <div
       className={cn("flex w-full justify-end", className)}
       data-testid="bubble-user"
     >
       <div className="flex gap-3 items-start max-w-[85%]">
-        <div className="bg-white/10 border border-white/5 text-white px-6 py-4 rounded-2xl rounded-tr-sm shadow-lg">
+        <div className="bg-slate-800/50 border border-white/10 text-slate-200 px-6 py-4 rounded-2xl rounded-tr-sm shadow-lg backdrop-blur-sm">
           <p className="text-base font-normal leading-relaxed whitespace-pre-wrap">{message}</p>
         </div>
         <Avatar className="h-8 w-8 flex-shrink-0 bg-slate-700 border border-slate-600">

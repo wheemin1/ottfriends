@@ -9,6 +9,8 @@ import { useTypewriter } from "@/hooks/use-typewriter";
 interface UserLandingProps {
   onSubmit: (text: string) => void;
   onNewChat: () => void;
+  desktopSidebarOpen: boolean;
+  setDesktopSidebarOpen: (open: boolean) => void;
 }
 
 const TYPING_PROMPTS = [
@@ -18,12 +20,12 @@ const TYPING_PROMPTS = [
   "긴장감 넘치는 스릴러 추천해줘"
 ];
 
-export default function UserLanding({ onSubmit, onNewChat }: UserLandingProps) {
+export default function UserLanding({ onSubmit, onNewChat, desktopSidebarOpen, setDesktopSidebarOpen }: UserLandingProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
   const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const typedText = useTypewriter(TYPING_PROMPTS, 80, 2500);
+  const [isPremium, setIsPremium] = useState(false); // v21.0: Premium status
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +49,29 @@ export default function UserLanding({ onSubmit, onNewChat }: UserLandingProps) {
     }, 100);
   };
 
+  // v21.0: 세션 로드 핸들러
+  const handleLoadSession = (sessionId: string) => {
+    const sessions = JSON.parse(localStorage.getItem('ottfriend_chat_sessions') || '[]');
+    const session = sessions.find((s: any) => s.id === sessionId);
+    
+    if (session) {
+      // 현재 세션 ID 설정
+      localStorage.setItem('ottfriend_current_session', sessionId);
+      
+      // 채팅 히스토리 로드
+      localStorage.setItem('ottfriend_chat_history', JSON.stringify(session.messages));
+      
+      // 채팅 시작 플래그 설정
+      localStorage.setItem('ottfriend_chat_started', 'true');
+      
+      // ChatInterface에 세션 로드 이벤트 발생
+      window.dispatchEvent(new Event('loadChatSession'));
+      
+      // 첫 메시지로 채팅 시작 (UserChat로 이동)
+      onSubmit('');
+    }
+  };
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-900">
       {/* v11.0: Aurora Glow Background */}
@@ -60,31 +85,25 @@ export default function UserLanding({ onSubmit, onNewChat }: UserLandingProps) {
         />
       </div>
 
-      {/* v11.3: Desktop Sidebar - Always render, control with width */}
-      <div className={`hidden md:block flex-none relative z-10 transition-all duration-300 ${
-        desktopSidebarOpen ? 'w-[260px]' : 'w-0'
-      } overflow-hidden`}>
+      {/* v18.0: Desktop Sidebar - Compact width (240px ↔ 64px) */}
+      <div className={`hidden md:block flex-none relative z-10 transition-all duration-300 ease-in-out overflow-hidden ${
+        desktopSidebarOpen ? 'w-[240px]' : 'w-[64px]'
+      }`}>
         <AppSidebar 
           onNewChat={onNewChat}
-          onLoadSession={() => {}}
-          currentSessionId=""
-          onToggleSidebar={() => setDesktopSidebarOpen(false)}
+          onLoadSession={handleLoadSession}
+          currentSessionId={localStorage.getItem('ottfriend_current_session') || ''}
+          onToggleSidebar={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
+          isCollapsed={!desktopSidebarOpen}
         />
       </div>
 
-      {/* v11.3: Sidebar Toggle Button (when closed) */}
-      {!desktopSidebarOpen && (
-        <div className="hidden md:block fixed top-6 left-6 z-50">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setDesktopSidebarOpen(true)}
-            className="bg-slate-900/80 backdrop-blur-md border border-white/10 text-white hover:bg-slate-800"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-        </div>
-      )}
+      {/* v17.1: Logo outside sidebar */}
+      <div className={`hidden md:flex fixed top-0 z-40 items-center transition-all duration-300 ease-in-out ${
+        desktopSidebarOpen ? 'left-[12px]' : 'left-[80px]'
+      } h-14 pointer-events-none`}>
+        <span className="text-base font-bold text-white whitespace-nowrap tracking-wide">OTT 프렌즈</span>
+      </div>
 
       {/* v11.0: Mobile Sidebar - Sheet Drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -113,8 +132,11 @@ export default function UserLanding({ onSubmit, onNewChat }: UserLandingProps) {
               onNewChat();
               setMobileOpen(false);
             }}
-            onLoadSession={() => {}}
-            currentSessionId=""
+            onLoadSession={(sessionId) => {
+              handleLoadSession(sessionId);
+              setMobileOpen(false);
+            }}
+            currentSessionId={localStorage.getItem('ottfriend_current_session') || ''}
           />
         </SheetContent>
       </Sheet>

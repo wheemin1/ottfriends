@@ -20,6 +20,7 @@ function Router() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLoginPage, setShowLoginPage] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
   const { toast } = useToast();
 
   // 로그인 여부 확인 및 auth state 리스너
@@ -71,6 +72,26 @@ function Router() {
   };
 
   const handleNewChat = () => {
+    // v21.0: Safe Reset - 저장 후 초기화 프로세스
+    if (isLoggedIn) {
+      // 1. 현재 세션이 자동 저장되도록 이벤트 트리거 (ChatInterface의 useEffect가 처리)
+      // 2. 히스토리 목록 갱신 이벤트 발생
+      window.dispatchEvent(new Event('chatSessionsUpdated'));
+      
+      // 3. 현재 대화 내역 완전 삭제 (새 대화는 빈 상태로 시작)
+      localStorage.removeItem('ottfriend_chat_history');
+      
+      // 4. 현재 활성 세션 ID 제거 (새 대화 준비)
+      localStorage.removeItem('ottfriend_current_session');
+      
+      // 5. 채팅 상태 플래그 제거
+      localStorage.removeItem('ottfriend_chat_started');
+      
+      // 6. 새 세션 시작 이벤트 발생 (ChatInterface가 초기화)
+      window.dispatchEvent(new Event('newChatSession'));
+    }
+    
+    // 7. UI 상태 초기화 (랜딩으로 이동)
     setIsChatStarted(false);
     setInputValue("");
   };
@@ -148,11 +169,18 @@ function Router() {
   // v4.8 Pure Start: 완전히 분리된 컴포넌트 사용
   if (isLoggedIn) {
     return isChatStarted ? (
-      <UserChat onNewChat={handleNewChat} firstMessage={inputValue} />
+      <UserChat 
+        onNewChat={handleNewChat} 
+        firstMessage={inputValue}
+        desktopSidebarOpen={desktopSidebarOpen}
+        setDesktopSidebarOpen={setDesktopSidebarOpen}
+      />
     ) : (
       <UserLanding
         onSubmit={handleStartChat}
         onNewChat={handleNewChat}
+        desktopSidebarOpen={desktopSidebarOpen}
+        setDesktopSidebarOpen={setDesktopSidebarOpen}
       />
     );
   }

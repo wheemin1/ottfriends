@@ -34,9 +34,10 @@ interface ChatInterfaceProps {
   };
   isGuest?: boolean; // v4.8: 게스트 모드
   firstMessage?: string; // v5.1: 랜딩에서 입력한 첫 메시지
+  hideHeader?: boolean; // v20.0: 헤더 숨김 옵션 (UserChat용)
 }
 
-export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageClick, onPersonaClick, onLoginClick, onRecommendationClick, persona = "friendly", quotaInfo, isGuest = false, firstMessage }: ChatInterfaceProps) {
+export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageClick, onPersonaClick, onLoginClick, onRecommendationClick, persona = "friendly", quotaInfo, isGuest = false, firstMessage, hideHeader = false }: ChatInterfaceProps) {
   // v4.8: 게스트는 localStorage 사용 안 함
   const [messages, setMessages] = useState<Message[]>(() => {
     if (!isGuest) {
@@ -85,11 +86,15 @@ export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageCli
       const title = firstUserMessage ? firstUserMessage.text.slice(0, 30) + (firstUserMessage.text.length > 30 ? '...' : '') : '새 대화';
       const preview = messages[messages.length - 1]?.text.slice(0, 50) || '';
       
+      // v21.0: 기존 세션이면 타임스탬프 유지, 새 세션이거나 메시지 길이 변경 시만 갱신
+      const existingSession = sessionIndex >= 0 ? sessions[sessionIndex] : null;
+      const shouldUpdateTimestamp = !existingSession || existingSession.messages.length !== messages.length;
+      
       const sessionData = {
         id: currentSessionId,
         title,
         preview,
-        timestamp: Date.now(),
+        timestamp: shouldUpdateTimestamp ? Date.now() : (existingSession?.timestamp || Date.now()),
         messages
       };
       
@@ -111,10 +116,18 @@ export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageCli
     }
   }, [firstMessage]);
 
-  // v4.3: 세션 이벤트 리스너
+  // v21.0: 세션 이벤트 리스너 - 완전한 초기화 지원
   useEffect(() => {
     const handleNewSession = () => {
+      // 새 세션 ID 생성
+      const newSessionId = `session_${Date.now()}`;
+      localStorage.setItem('ottfriend_current_session', newSessionId);
+      
+      // 메시지 초기화 (초기 인사말)
       setMessages([{ id: '1', text: '안녕! 오늘 기분이 어때?', isAI: true }]);
+      
+      // 히스토리 제거 (새 대화 시작)
+      localStorage.removeItem('ottfriend_chat_history');
     };
     
     const handleLoadSession = () => {
@@ -205,8 +218,8 @@ export default function ChatInterface({ onMenuClick, onPremiumClick, onMyPageCli
 
   return (
     <div className="h-full flex flex-col bg-transparent" data-testid="chat-interface">
-      {/* v5.2: 게스트 모드에서는 헤더 숨김 (GuestChat이 자체 헤더 사용) */}
-      {!isGuest && (
+      {/* v20.0: hideHeader prop으로 헤더 숨김 제어 */}
+      {!isGuest && !hideHeader && (
         <header className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-transparent backdrop-blur-md flex-shrink-0">
           {/* 왼쪽: 탐색 영역 */}
           <div className="flex items-center gap-3">
