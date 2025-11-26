@@ -37,21 +37,14 @@ export default function UserLanding({ onSubmit, onNewChat }: UserLandingProps) {
         />
       </div>
 
-      {/* v10.2: Desktop Sidebar - Collapsible */}
-      {desktopSidebarOpen && (
-        <div className="hidden md:block relative z-10">
-          <AppSidebar 
-            onNewChat={onNewChat}
-            onLoadSession={() => {}}
-            currentSessionId=""
-            onToggleSidebar={() => setDesktopSidebarOpen(false)}
-          />
-        </div>
-      )}
+      {/* v10.5: Logo - GuestLanding과 동일한 심플 로고 */}
+      <div className="fixed top-6 left-6 z-40">
+        <span className="font-semibold text-foreground text-lg">OTT 프렌즈</span>
+      </div>
 
-      {/* v10.2: Show Sidebar Button when collapsed */}
+      {/* v10.2: Desktop Sidebar - Collapsible */}
       {!desktopSidebarOpen && (
-        <div className="hidden md:block fixed top-4 left-4 z-50">
+        <div className="hidden md:block fixed top-6 left-56 z-50">
           <Button
             variant="ghost"
             size="icon"

@@ -98,23 +98,23 @@ export default function AppSidebar({ onNewChat, onLoadSession, currentSessionId,
   const { today, last7Days, older } = groupSessions();
 
   return (
-    <div className="w-[260px] h-screen flex flex-col bg-slate-950/60 backdrop-blur-xl border-r border-white/5">
-      {/* v10.3: Header - Frosted Glass Style */}
+    <div className="w-[260px] h-screen flex flex-col bg-slate-950/50 backdrop-blur-xl border-r border-white/5">
+      {/* v10.5: Header - 로고 제거, 버튼만 유지 */}
       <div className="p-4 border-b border-white/5">
         <div className="flex items-center gap-2">
           <Button
             onClick={onNewChat}
-            className="flex-1 justify-center gap-2 bg-white text-black hover:bg-slate-200 rounded-full font-medium shadow-lg shadow-white/5 transition-all"
+            className="flex-1 justify-center gap-2 bg-white/90 text-black hover:bg-white rounded-full font-medium shadow-lg shadow-purple-500/10 hover:shadow-purple-500/20 transition-all"
           >
             <Plus className="h-4 w-4" />
-            <span className="text-sm">새 채팅</span>
+            <span className="text-sm font-medium">새 채팅</span>
           </Button>
           {onToggleSidebar && (
             <Button
               variant="ghost"
               size="icon"
               onClick={onToggleSidebar}
-              className="text-slate-500 hover:text-white hover:bg-white/5 rounded-lg transition-colors flex-shrink-0"
+              className="text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-all flex-shrink-0"
             >
               <PanelLeftClose className="h-4 w-4" />
             </Button>
@@ -184,25 +184,25 @@ export default function AppSidebar({ onNewChat, onLoadSession, currentSessionId,
         </div>
       </ScrollArea>
 
-      {/* v10.3: User Profile - Frosted Glass Footer */}
-      <div className="mt-auto border-t border-white/5">
+      {/* v10.4: User Profile - Enhanced Clickable Card */}
+      <div className="mt-auto border-t border-white/5 bg-gradient-to-t from-slate-950/40 to-transparent">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="w-full p-4 flex items-center gap-3 hover:bg-white/5 transition-colors justify-start rounded-none"
+              className="w-full p-4 flex items-center gap-3 hover:bg-white/10 active:bg-white/15 transition-all justify-start rounded-none group"
             >
-              <Avatar className="h-8 w-8">
+              <Avatar className="h-9 w-9 ring-2 ring-white/10 group-hover:ring-white/20 transition-all">
                 <AvatarImage src={user?.user_metadata?.avatar_url} />
-                <AvatarFallback className="bg-primary/20 text-primary">
+                <AvatarFallback className="bg-gradient-to-br from-purple-500/30 to-blue-500/30 text-white">
                   <User className="h-4 w-4" />
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0 text-left">
-                <span className="text-sm text-white font-medium block truncate">
+                <span className="text-sm text-white font-semibold block truncate group-hover:text-white transition-colors">
                   {user?.user_metadata?.full_name || user?.email?.split('@')[0] || '사용자'}
                 </span>
-                <span className="text-xs text-slate-300 block truncate">
+                <span className="text-xs text-slate-400 block truncate group-hover:text-slate-300 transition-colors">
                   {user?.email}
                 </span>
               </div>
