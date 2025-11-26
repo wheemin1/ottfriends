@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 
 interface ChatSession {
@@ -19,10 +18,10 @@ interface AppSidebarProps {
   onLoadSession?: (sessionId: string) => void;
   currentSessionId?: string;
   onToggleSidebar?: () => void;
+  onLogout?: () => void;
 }
 
-export default function AppSidebar({ onNewChat, onLoadSession, currentSessionId, onToggleSidebar }: AppSidebarProps) {
-  const navigate = useNavigate();
+export default function AppSidebar({ onNewChat, onLoadSession, currentSessionId, onToggleSidebar, onLogout }: AppSidebarProps) {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [user, setUser] = useState<any>(null);
 
@@ -61,7 +60,7 @@ export default function AppSidebar({ onNewChat, onLoadSession, currentSessionId,
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate('/');
+    onLogout?.();
   };
 
   const formatTime = (timestamp: number) => {
@@ -99,27 +98,28 @@ export default function AppSidebar({ onNewChat, onLoadSession, currentSessionId,
   const { today, last7Days, older } = groupSessions();
 
   return (
-    <div className="w-[260px] h-screen flex flex-col bg-slate-950/80 backdrop-blur-xl border-r border-white/5">
-      {/* v10.0: Header - New Chat + Toggle */}
-      <div className="p-4 border-b border-white/5 flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={onNewChat}
-          className="flex-1 justify-start gap-2 text-white hover:bg-white/10 transition-colors"
-        >
-          <Plus className="h-5 w-5" />
-          <span className="text-sm font-medium">새로운 대화</span>
-        </Button>
-        {onToggleSidebar && (
+    <div className="w-[260px] h-screen flex flex-col bg-slate-950/60 backdrop-blur-xl border-r border-white/5">
+      {/* v10.3: Header - Frosted Glass Style */}
+      <div className="p-4 border-b border-white/5">
+        <div className="flex items-center gap-2">
           <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleSidebar}
-            className="ml-2 text-white hover:bg-white/10"
+            onClick={onNewChat}
+            className="flex-1 justify-center gap-2 bg-white text-black hover:bg-slate-200 rounded-full font-medium shadow-lg shadow-white/5 transition-all"
           >
-            <PanelLeftClose className="h-5 w-5" />
+            <Plus className="h-4 w-4" />
+            <span className="text-sm">새 채팅</span>
           </Button>
-        )}
+          {onToggleSidebar && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleSidebar}
+              className="text-slate-500 hover:text-white hover:bg-white/5 rounded-lg transition-colors flex-shrink-0"
+            >
+              <PanelLeftClose className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* v10.0: History List with ScrollArea */}
@@ -184,13 +184,13 @@ export default function AppSidebar({ onNewChat, onLoadSession, currentSessionId,
         </div>
       </ScrollArea>
 
-      {/* v10.0: User Profile with Dropdown */}
+      {/* v10.3: User Profile - Frosted Glass Footer */}
       <div className="mt-auto border-t border-white/5">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="w-full p-4 flex items-center gap-3 hover:bg-white/5 transition-colors justify-start"
+              className="w-full p-4 flex items-center gap-3 hover:bg-white/5 transition-colors justify-start rounded-none"
             >
               <Avatar className="h-8 w-8">
                 <AvatarImage src={user?.user_metadata?.avatar_url} />
@@ -198,9 +198,14 @@ export default function AppSidebar({ onNewChat, onLoadSession, currentSessionId,
                   <User className="h-4 w-4" />
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm text-white truncate">
-                {user?.user_metadata?.full_name || user?.email || '사용자'}
-              </span>
+              <div className="flex-1 min-w-0 text-left">
+                <span className="text-sm text-white font-medium block truncate">
+                  {user?.user_metadata?.full_name || user?.email?.split('@')[0] || '사용자'}
+                </span>
+                <span className="text-xs text-slate-300 block truncate">
+                  {user?.email}
+                </span>
+              </div>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="end" className="w-[240px]">

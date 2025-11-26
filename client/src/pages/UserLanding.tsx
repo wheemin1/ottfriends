@@ -1,7 +1,9 @@
+import { motion } from "framer-motion";
 import AppSidebar from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
-import { ArrowUp, Menu } from "lucide-react";
-import { useState, useRef } from "react";
+import { Input } from "@/components/ui/input";
+import { Send, Menu } from "lucide-react";
+import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 interface UserLandingProps {
@@ -10,35 +12,58 @@ interface UserLandingProps {
 }
 
 export default function UserLanding({ onSubmit, onNewChat }: UserLandingProps) {
-  const [inputValue, setInputValue] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
 
-  const handleSubmit = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (inputValue.trim()) {
-      onSubmit(inputValue);
-      setInputValue("");
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const input = (e.target as HTMLFormElement).querySelector('input') as HTMLInputElement;
+    if (input.value.trim()) {
+      onSubmit(input.value);
+      input.value = '';
     }
   };
 
-  const handleChipClick = (message: string) => {
-    setInputValue(message);
-    setTimeout(() => handleSubmit(), 100);
-  };
-
   return (
-    <div className="h-screen bg-slate-950 flex overflow-hidden">
-      {/* v10.0: Desktop Sidebar - Always Visible */}
-      <div className="hidden md:block">
-        <AppSidebar 
-          onNewChat={onNewChat}
-          onLoadSession={() => {}}
-          currentSessionId=""
+    <div className="h-screen bg-background flex overflow-hidden relative">
+      {/* v10.1: GuestLanding Aurora Glow - 전체 배경 조명 효과 */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(168, 85, 247, 0.18) 0%, rgba(139, 92, 246, 0.1) 40%, transparent 70%)',
+            filter: 'blur(100px)'
+          }}
         />
       </div>
 
-      {/* v10.0: Mobile Sidebar - Sheet Drawer */}
+      {/* v10.2: Desktop Sidebar - Collapsible */}
+      {desktopSidebarOpen && (
+        <div className="hidden md:block relative z-10">
+          <AppSidebar 
+            onNewChat={onNewChat}
+            onLoadSession={() => {}}
+            currentSessionId=""
+            onToggleSidebar={() => setDesktopSidebarOpen(false)}
+          />
+        </div>
+      )}
+
+      {/* v10.2: Show Sidebar Button when collapsed */}
+      {!desktopSidebarOpen && (
+        <div className="hidden md:block fixed top-4 left-4 z-50">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setDesktopSidebarOpen(true)}
+            className="bg-slate-900/80 backdrop-blur-md border border-white/10 text-white hover:bg-slate-800"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </div>
+      )}
+
+      {/* v10.1: Mobile Sidebar - Sheet Drawer */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <div className="md:hidden fixed top-4 left-4 z-50">
           <SheetTrigger asChild>
@@ -63,70 +88,82 @@ export default function UserLanding({ onSubmit, onNewChat }: UserLandingProps) {
         </SheetContent>
       </Sheet>
 
-      {/* v10.0: Main Content Area */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 relative overflow-hidden">
-        {/* v10.0: Aurora Glow Background */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
-          <div className="absolute w-[500px] h-[500px] bg-gradient-radial from-primary/40 via-primary/20 to-transparent blur-3xl animate-pulse" 
-               style={{ animationDuration: '4s' }} />
-          <div className="absolute w-[400px] h-[400px] bg-gradient-radial from-blue-500/30 via-blue-500/10 to-transparent blur-3xl animate-pulse" 
-               style={{ animationDuration: '5s', animationDelay: '1s' }} />
-        </div>
-
-        {/* v10.0: Center Content */}
-        <div className="w-full max-w-3xl text-center space-y-8 relative z-10">
-          {/* v10.0: Hero Title */}
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-8">
+      {/* v10.1: Main Content - GuestLanding 디자인 시스템 적용 */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 relative z-10">
+        <motion.div 
+          className="w-full max-w-3xl mx-auto text-center space-y-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* v10.1: Headline - GuestLanding 스타일 */}
+          <motion.h1 
+            className="text-4xl md:text-5xl lg:text-6xl font-medium text-slate-200 leading-tight"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+          >
             오늘 어떤 영화 볼래요?
-          </h1>
+          </motion.h1>
 
-          {/* v10.0: Hero Input - Large Pill Shape */}
-          <form onSubmit={handleSubmit} className="relative w-full max-w-2xl mx-auto">
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="예) 오늘 기분 좀 우울한데 뭐 볼까?"
-              className="w-full h-16 px-6 pr-16 text-base rounded-[2rem] bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-slate-400 shadow-2xl focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
-              autoFocus
-              spellCheck={false}
-            />
-            <button
-              type="submit"
-              disabled={!inputValue.trim()}
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-white text-black hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
-            >
-              <ArrowUp className="h-5 w-5" />
-            </button>
-          </form>
+          {/* v10.1: Hero Input - GuestLanding의 유리 질감 입력창 */}
+          <motion.div
+            layoutId="input-container"
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="w-full max-w-3xl mx-auto"
+          >
+            <form onSubmit={handleSubmit} className="relative">
+              <Input
+                type="text"
+                placeholder="예) 오늘 기분 좀 우울한데 뭐 볼까?"
+                className="w-full h-16 px-6 pr-16 text-lg rounded-3xl border border-white/10 bg-slate-900 focus:border-white/40 focus-visible:ring-1 focus-visible:ring-white/20 focus-visible:ring-offset-0 shadow-2xl transition-all placeholder:text-slate-500"
+                autoFocus
+                spellCheck={false}
+              />
+              <button
+                type="submit"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 bg-white text-black hover:bg-slate-200 transition-all z-10 flex items-center justify-center"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </form>
+          </motion.div>
 
-          {/* v10.0: Suggestion Chips */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
+          {/* v10.1: Suggestion Chips - GuestLanding 투명 알약 스타일 */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+            className="flex flex-wrap items-center justify-center gap-2 mt-6"
+          >
             {[
               { label: "요즘 핫한거", message: "요즘 가장 핫한 영화 추천해줘" },
               { label: "우울할 때", message: "나 오늘 좀 우울해, 기분 전환할 영화 추천해줘" },
               { label: "로맨스", message: "설레는 로맨스 영화 보고 싶어" },
-              { label: "스릴러", message: "긴장감 넘치는 스릴러 추천해줘" },
-              { label: "주말 정주행", message: "주말에 정주행하기 좋은 시리즈물 추천해줘" }
+              { label: "스릴러", message: "긴장감 넘치는 스릴러 추천해줘" }
             ].map((chip, i) => (
               <Button
                 key={i}
                 variant="ghost"
                 size="sm"
-                onClick={() => handleChipClick(chip.message)}
-                className="rounded-full px-4 py-2 text-sm bg-white/5 border border-white/10 text-slate-300 hover:bg-white/20 hover:border-white/30 transition-all"
+                className="rounded-full px-3 py-1.5 text-xs bg-transparent border border-white/20 text-slate-400 hover:border-white/30 hover:text-slate-200 transition-all"
+                onClick={() => onSubmit(chip.message)}
               >
                 {chip.label}
               </Button>
             ))}
-          </div>
+          </motion.div>
 
-          {/* Disclaimer */}
-          <p className="text-xs text-center text-muted-foreground/60 mt-8">
+          {/* v10.1: Disclaimer */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="text-xs text-center text-muted-foreground/60 mt-4"
+          >
             AI 친구도 가끔은 실수할 수 있어요. 영화 정보는 한 번 더 확인해 주세요. 😊
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
       </div>
     </div>
   );

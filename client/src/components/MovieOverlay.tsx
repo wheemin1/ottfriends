@@ -491,7 +491,7 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                         return null;
                       })()}
                       {movie.reviews && movie.reviews.length > 0 ? (
-                        movie.reviews.map((review, idx) => {
+                        movie.reviews.map((review: any, idx) => {
                           console.log(`[MovieOverlay Render] Review ${idx}:`, review);
                           const reviewText = typeof review === 'string' ? review : review?.content || JSON.stringify(review);
                           const reviewAuthor = typeof review === 'object' && review?.author ? review.author : null;
