@@ -99,27 +99,30 @@ export default function AppSidebar({ onNewChat, onLoadSession, currentSessionId,
 
   return (
     <div className="w-[260px] h-screen flex flex-col bg-slate-950/50 backdrop-blur-xl border-r border-white/5">
-      {/* v10.5: Header - 로고 제거, 버튼만 유지 */}
-      <div className="p-4 border-b border-white/5">
-        <div className="flex items-center gap-2">
+      {/* v12.0: Header - Logo + Collapse Button (ChatGPT Structure) */}
+      <div className="flex items-center justify-between p-4 border-b border-white/5">
+        <span className="font-bold text-lg text-white">OTT 프렌즈</span>
+        {onToggleSidebar && (
           <Button
-            onClick={onNewChat}
-            className="flex-1 justify-center gap-2 bg-white/90 text-black hover:bg-white rounded-full font-medium shadow-lg shadow-purple-500/10 hover:shadow-purple-500/20 transition-all"
+            variant="ghost"
+            size="icon"
+            onClick={onToggleSidebar}
+            className="text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-all"
           >
-            <Plus className="h-4 w-4" />
-            <span className="text-sm font-medium">새 채팅</span>
+            <PanelLeftClose className="h-5 w-5" />
           </Button>
-          {onToggleSidebar && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onToggleSidebar}
-              className="text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-all flex-shrink-0"
-            >
-              <PanelLeftClose className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        )}
+      </div>
+
+      {/* v12.1: New Chat Button (Below Header) - Transparent border style */}
+      <div className="px-4 py-4 border-b border-white/5">
+        <Button
+          onClick={onNewChat}
+          className="w-full h-10 justify-start gap-2 bg-transparent border border-white/20 text-white hover:bg-white/5 rounded-xl font-medium transition-all"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="text-sm font-semibold">새 채팅</span>
+        </Button>
       </div>
 
       {/* v10.0: History List with ScrollArea */}
@@ -208,14 +211,18 @@ export default function AppSidebar({ onNewChat, onLoadSession, currentSessionId,
               </div>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="end" className="w-[240px]">
-            <DropdownMenuItem className="cursor-pointer">
+          <DropdownMenuContent 
+            side="top" 
+            align="end" 
+            className="w-[240px] bg-slate-900/90 backdrop-blur-xl border border-white/10 shadow-2xl"
+          >
+            <DropdownMenuItem className="cursor-pointer focus:bg-white/10 transition-colors">
               <Settings className="h-4 w-4 mr-2" />
               <span>설정</span>
             </DropdownMenuItem>
             <DropdownMenuItem 
               onClick={handleLogout}
-              className="cursor-pointer text-red-400 focus:text-red-400"
+              className="cursor-pointer text-red-400 focus:text-red-400 focus:bg-red-500/10 transition-colors"
             >
               <LogOut className="h-4 w-4 mr-2" />
               <span>로그아웃</span>
