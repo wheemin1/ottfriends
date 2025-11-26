@@ -459,14 +459,14 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                   )}
                 </div>
 
-                {/* v9.2: Magazine-style Accordions - 매거진 목차 디자인 */}
-                <Accordion type="multiple" defaultValue={["reviews"]} className="space-y-0">
+                {/* v9.5: Accordion with Flex Gap - 단른 gap으로 절대적 여백 */}
+                <Accordion type="multiple" defaultValue={["reviews"]} className="flex flex-col gap-8">
                   {/* Plot */}
                   <AccordionItem value="plot" className="border-0">
-                    <AccordionTrigger className="bg-transparent border-b border-white/10 py-6 hover:no-underline text-left">
-                      <div className="flex items-center gap-3">
+                    <AccordionTrigger className="bg-transparent border-b border-white/10 py-8 hover:no-underline text-left">
+                      <div className="flex items-center gap-4">
                         <BookOpen className="h-5 w-5 text-primary" />
-                        <span className="text-lg font-medium">그래서, 뭔 내용인데?</span>
+                        <span className="text-xl font-medium">그래서, 뭔 내용인데?</span>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-4 pt-4">
@@ -478,10 +478,10 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
 
                   {/* Global Reviews */}
                   <AccordionItem value="reviews" className="border-0">
-                    <AccordionTrigger className="bg-transparent border-b border-white/10 py-6 hover:no-underline text-left">
-                      <div className="flex items-center gap-3">
+                    <AccordionTrigger className="bg-transparent border-b border-white/10 py-8 hover:no-underline text-left">
+                      <div className="flex items-center gap-4">
                         <Globe className="h-5 w-5 text-primary" />
-                        <span className="text-lg font-medium">세계는 이 영화를 어떻게 봤어? </span>
+                        <span className="text-xl font-medium">세계는 이 영화를 어떻게 봤어? </span>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-4 pt-4 space-y-3">
@@ -521,10 +521,10 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
 
                   {/* Cast */}
                   <AccordionItem value="cast" className="border-0">
-                    <AccordionTrigger className="bg-transparent border-b border-white/10 py-6 hover:no-underline text-left">
-                      <div className="flex items-center gap-3">
+                    <AccordionTrigger className="bg-transparent border-b border-white/10 py-8 hover:no-underline text-left">
+                      <div className="flex items-center gap-4">
                         <Users className="h-5 w-5 text-primary" />
-                        <span className="text-lg font-medium">누가 나와?</span>
+                        <span className="text-xl font-medium">누가 나와?</span>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-4 pt-4">
@@ -546,10 +546,10 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
 
                   {/* User Comments */}
                   <AccordionItem value="comments" className="border-0">
-                    <AccordionTrigger className="bg-transparent border-b border-white/10 py-6 hover:no-underline text-left">
-                      <div className="flex items-center gap-3">
+                    <AccordionTrigger className="bg-transparent border-b border-white/10 py-8 hover:no-underline text-left">
+                      <div className="flex items-center gap-4">
                         <MessageSquare className="h-5 w-5 text-primary" />
-                        <span className="text-lg font-medium">우리 친구들 후기는? ✍️</span>
+                        <span className="text-xl font-medium">우리 친구들 후기는? ✍️</span>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-4 pt-4 space-y-4">
