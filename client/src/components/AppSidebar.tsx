@@ -1,7 +1,11 @@
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
-import { Sparkles, MessageSquare, Trash2 } from "lucide-react";
+import { Plus, MessageSquare, Settings, LogOut, PanelLeftClose, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 
 interface ChatSession {
   id: string;
@@ -14,10 +18,22 @@ interface AppSidebarProps {
   onNewChat: () => void;
   onLoadSession?: (sessionId: string) => void;
   currentSessionId?: string;
+  onToggleSidebar?: () => void;
 }
 
-export default function AppSidebar({ onNewChat, onLoadSession, currentSessionId }: AppSidebarProps) {
+export default function AppSidebar({ onNewChat, onLoadSession, currentSessionId, onToggleSidebar }: AppSidebarProps) {
+  const navigate = useNavigate();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [user, setUser] = useState<any>(null);
+
+  // Load user info
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
 
   // Load sessions from localStorage
   useEffect(() => {
@@ -34,9 +50,7 @@ export default function AppSidebar({ onNewChat, onLoadSession, currentSessionId 
     };
 
     loadSessions();
-    // Listen for storage changes
     window.addEventListener('storage', loadSessions);
-    // Custom event for same-tab updates
     window.addEventListener('chatSessionsUpdated', loadSessions);
     
     return () => {
@@ -45,18 +59,9 @@ export default function AppSidebar({ onNewChat, onLoadSession, currentSessionId 
     };
   }, []);
 
-  const handleDeleteSession = (sessionId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const updated = sessions.filter(s => s.id !== sessionId);
-    localStorage.setItem('ottfriend_chat_sessions', JSON.stringify(updated));
-    setSessions(updated);
-    
-    // If deleting current session, clear chat
-    if (sessionId === currentSessionId) {
-      localStorage.removeItem('ottfriend_chat_history');
-      localStorage.removeItem('ottfriend_current_session');
-      window.dispatchEvent(new Event('chatSessionsUpdated'));
-    }
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
   };
 
   const formatTime = (timestamp: number) => {
@@ -76,8 +81,7 @@ export default function AppSidebar({ onNewChat, onLoadSession, currentSessionId 
   const groupSessions = () => {
     const now = Date.now();
     const today: ChatSession[] = [];
-    const yesterday: ChatSession[] = [];
-    const thisWeek: ChatSession[] = [];
+    const last7Days: ChatSession[] = [];
     const older: ChatSession[] = [];
 
     sessions.forEach(session => {
@@ -85,96 +89,135 @@ export default function AppSidebar({ onNewChat, onLoadSession, currentSessionId 
       const days = Math.floor(diff / 86400000);
 
       if (days === 0) today.push(session);
-      else if (days === 1) yesterday.push(session);
-      else if (days < 7) thisWeek.push(session);
+      else if (days < 7) last7Days.push(session);
       else older.push(session);
     });
 
-    return { today, yesterday, thisWeek, older };
+    return { today, last7Days, older };
   };
 
-  const { today, yesterday, thisWeek, older } = groupSessions();
-
-  const renderSessionGroup = (title: string, sessionList: ChatSession[]) => {
-    if (sessionList.length === 0) return null;
-
-    return (
-      <SidebarGroup className="mt-4">
-        <SidebarGroupLabel className="text-xs text-muted-foreground">
-          {title}
-        </SidebarGroupLabel>
-        <SidebarGroupContent className="mt-2">
-          <SidebarMenu>
-            {sessionList.map(session => (
-              <SidebarMenuItem key={session.id}>
-                <div className="relative group w-full">
-                  <SidebarMenuButton
-                    onClick={() => onLoadSession?.(session.id)}
-                    className={`w-full justify-start ${
-                      currentSessionId === session.id ? 'bg-accent' : ''
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <MessageSquare className="h-4 w-4 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{session.title}</p>
-                        <p className="text-xs text-muted-foreground">{formatTime(session.timestamp)}</p>
-                      </div>
-                    </div>
-                  </SidebarMenuButton>
-                  <button
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-md hover:bg-accent opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => handleDeleteSession(session.id, e)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                </div>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
-    );
-  };
+  const { today, last7Days, older } = groupSessions();
 
   return (
-    <Sidebar data-testid="app-sidebar">
-      <SidebarContent className="p-4">
-        {/* v4.3: 새 대화 시작 버튼 */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={onNewChat} 
-                  className="w-full justify-start rounded-xl bg-primary text-primary-foreground hover:bg-primary/90" 
-                  data-testid="button-new-chat"
-                >
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  새 대화 시작
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* v4.3: 채팅 기록 리스트 */}
-        {renderSessionGroup('💬 오늘', today)}
-        {renderSessionGroup('💬 어제', yesterday)}
-        {renderSessionGroup('💬 이번 주', thisWeek)}
-        {renderSessionGroup('💬 이전', older)}
-
-        {sessions.length === 0 && (
-          <SidebarGroup className="mt-4">
-            <SidebarGroupContent>
-              <p className="text-sm text-muted-foreground px-2 py-4 text-center">
-                아직 대화 기록이 없어요<br />
-                위 버튼으로 시작해보세요! 🚀
-              </p>
-            </SidebarGroupContent>
-          </SidebarGroup>
+    <div className="w-[260px] h-screen flex flex-col bg-slate-950/80 backdrop-blur-xl border-r border-white/5">
+      {/* v10.0: Header - New Chat + Toggle */}
+      <div className="p-4 border-b border-white/5 flex items-center justify-between">
+        <Button
+          variant="ghost"
+          onClick={onNewChat}
+          className="flex-1 justify-start gap-2 text-white hover:bg-white/10 transition-colors"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="text-sm font-medium">새로운 대화</span>
+        </Button>
+        {onToggleSidebar && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleSidebar}
+            className="ml-2 text-white hover:bg-white/10"
+          >
+            <PanelLeftClose className="h-5 w-5" />
+          </Button>
         )}
-      </SidebarContent>
-    </Sidebar>
+      </div>
+
+      {/* v10.0: History List with ScrollArea */}
+      <ScrollArea className="flex-1 px-2">
+        <div className="space-y-2 py-2">
+          {/* Today Group */}
+          {today.length > 0 && (
+            <div className="space-y-1">
+              <div className="px-3 py-2">
+                <p className="text-xs text-muted-foreground font-medium">오늘</p>
+              </div>
+              {today.map(session => (
+                <Button
+                  key={session.id}
+                  variant="ghost"
+                  onClick={() => onLoadSession?.(session.id)}
+                  className={`w-full justify-start text-left transition-colors ${
+                    currentSessionId === session.id 
+                      ? 'bg-white/15 text-white' 
+                      : 'text-slate-300 hover:bg-white/10'
+                  }`}
+                >
+                  <MessageSquare className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <span className="truncate text-sm">{session.title}</span>
+                </Button>
+              ))}
+            </div>
+          )}
+
+          {/* Last 7 Days Group */}
+          {last7Days.length > 0 && (
+            <div className="space-y-1 mt-4">
+              <div className="px-3 py-2">
+                <p className="text-xs text-muted-foreground font-medium">지난 7일</p>
+              </div>
+              {last7Days.map(session => (
+                <Button
+                  key={session.id}
+                  variant="ghost"
+                  onClick={() => onLoadSession?.(session.id)}
+                  className={`w-full justify-start text-left transition-colors ${
+                    currentSessionId === session.id 
+                      ? 'bg-white/15 text-white' 
+                      : 'text-slate-300 hover:bg-white/10'
+                  }`}
+                >
+                  <MessageSquare className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <span className="truncate text-sm">{session.title}</span>
+                </Button>
+              ))}
+            </div>
+          )}
+
+          {/* Empty State */}
+          {sessions.length === 0 && (
+            <div className="px-3 py-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                아직 대화 기록이 없어요
+              </p>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* v10.0: User Profile with Dropdown */}
+      <div className="mt-auto border-t border-white/5">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full p-4 flex items-center gap-3 hover:bg-white/5 transition-colors justify-start"
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user?.user_metadata?.avatar_url} />
+                <AvatarFallback className="bg-primary/20 text-primary">
+                  <User className="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm text-white truncate">
+                {user?.user_metadata?.full_name || user?.email || '사용자'}
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="end" className="w-[240px]">
+            <DropdownMenuItem className="cursor-pointer">
+              <Settings className="h-4 w-4 mr-2" />
+              <span>설정</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={handleLogout}
+              className="cursor-pointer text-red-400 focus:text-red-400"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              <span>로그아웃</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
   );
 }
