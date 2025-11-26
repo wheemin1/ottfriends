@@ -459,14 +459,14 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
                   )}
                 </div>
 
-                {/* Accordions */}
-                <Accordion type="multiple" defaultValue={["reviews"]} className="space-y-3">
+                {/* v9.2: Magazine-style Accordions - 매거진 목차 디자인 */}
+                <Accordion type="multiple" defaultValue={["reviews"]} className="space-y-0">
                   {/* Plot */}
                   <AccordionItem value="plot" className="border-0">
-                    <AccordionTrigger className="rounded-xl px-4 py-4 bg-card hover:no-underline hover-elevate">
+                    <AccordionTrigger className="bg-transparent border-b border-white/10 py-6 hover:no-underline text-left">
                       <div className="flex items-center gap-3">
                         <BookOpen className="h-5 w-5 text-primary" />
-                        <span className="font-medium">그래서, 뭔 내용인데?</span>
+                        <span className="text-lg font-medium">그래서, 뭔 내용인데?</span>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-4 pt-4">
@@ -478,10 +478,10 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
 
                   {/* Global Reviews */}
                   <AccordionItem value="reviews" className="border-0">
-                    <AccordionTrigger className="rounded-xl px-4 py-4 bg-card hover:no-underline hover-elevate">
+                    <AccordionTrigger className="bg-transparent border-b border-white/10 py-6 hover:no-underline text-left">
                       <div className="flex items-center gap-3">
                         <Globe className="h-5 w-5 text-primary" />
-                        <span className="font-medium">세계는 이 영화를 어떻게 봤어? 🌎</span>
+                        <span className="text-lg font-medium">세계는 이 영화를 어떻게 봤어? </span>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-4 pt-4 space-y-3">
@@ -521,10 +521,10 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
 
                   {/* Cast */}
                   <AccordionItem value="cast" className="border-0">
-                    <AccordionTrigger className="rounded-xl px-4 py-4 bg-card hover:no-underline hover-elevate">
+                    <AccordionTrigger className="bg-transparent border-b border-white/10 py-6 hover:no-underline text-left">
                       <div className="flex items-center gap-3">
                         <Users className="h-5 w-5 text-primary" />
-                        <span className="font-medium">누가 나와?</span>
+                        <span className="text-lg font-medium">누가 나와?</span>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-4 pt-4">
@@ -546,10 +546,10 @@ export default function MovieOverlay({ open, onClose, movie }: MovieOverlayProps
 
                   {/* User Comments */}
                   <AccordionItem value="comments" className="border-0">
-                    <AccordionTrigger className="rounded-xl px-4 py-4 bg-card hover:no-underline hover-elevate">
+                    <AccordionTrigger className="bg-transparent border-b border-white/10 py-6 hover:no-underline text-left">
                       <div className="flex items-center gap-3">
                         <MessageSquare className="h-5 w-5 text-primary" />
-                        <span className="font-medium">우리 친구들 후기는? ✍️</span>
+                        <span className="text-lg font-medium">우리 친구들 후기는? ✍️</span>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-4 pt-4 space-y-4">
